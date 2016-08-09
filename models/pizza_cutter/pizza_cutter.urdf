@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<robot name="pizza_cutter">
+  <link name="pizza_cutter">
+    <collision>
+      <geometry>
+        <mesh filename="package://pizza_demo/models/pizza_cutter/meshes/pizza_cutter.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <geometry>
+        <mesh filename="package://pizza_demo/models/pizza_cutter/meshes/pizza_cutter.stl"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>

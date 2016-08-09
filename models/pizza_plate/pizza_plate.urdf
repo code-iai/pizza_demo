@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<robot name="pizza_plate">
+  <link name="pizza_plate">
+    <visual>
+      <geometry>
+        <mesh filename="package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://pizza_demo/models/pizza_plate/meshes/pizza_plate_collision.stl"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>

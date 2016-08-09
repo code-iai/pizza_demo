@@ -1,0 +1,111 @@
+<launch>
+
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find ltfnp_maps)/maps/shopping_area.yaml" />-->
+  <!--node name="map_server" pkg="map_server" type="map_server" args="$(find ltfnp_maps)/maps/shopping_area_new.yaml" /-->
+
+  <!-- More tf related things -->
+  <node name="static_world_frame" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom_combined 100" />
+
+  <!-- Load reasoning. TODO: get rid of the dep on ltfnp_reasoning. -->
+  <param name="initial_package" type="string" value="ltfnp_reasoning" />
+  <node name="json_prolog" pkg="json_prolog" type="json_prolog_node" output="screen"/>
+
+  <!-- TODO: point to a package here, s.t. its name matches the SimModels repo path for this PR2 description -->
+  <param name="robot_description_lowres" command="$(find xacro)/xacro.py '$(find pr2_description_lowres)/robots/pr2.urdf.xacro'" />
+
+  <env name="GAZEBO_MODEL_PATH" value="$(find pizza_demo)/models" />
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find pizza_demo)/worlds/empty_world_with_plugins.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+  
+  <!-- Start PR2 Robot -->
+  <!-- Startup PR2 without any mechanism controllers -->
+  <!-- send pr2 urdf to param server -->
+  <!-- TODO: point to a package here, s.t. its name matches the SimModels repo path for this PR2 description -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find pizza_demo)/models/altered_pr2/pr2.urdf.xacro'" />
+
+  <!-- push robot_description to factory and spawn robot in gazebo -->
+  <node name="spawn_pr2_model" pkg="gazebo_ros" type="spawn_model" args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model pr2 -ros_namespace /gazebo" respawn="false" output="screen" />
+
+  <!-- default bringup script -->
+  <include file="$(find pr2_gazebo)/launch/pr2_bringup.launch" />
+
+  <!-- Load and Start Default Controllers -->
+  <include file="$(find pr2_controller_configuration_gazebo)/launch/pr2_default_controllers.launch" />
+  
+  <!-- Spawn the kitchen -->
+  <include file="$(find iai_kitchen)/launch/gazebo_spawn_kitchen.launch"/>
+
+  <!-- Spawn pizza plate, pizza cutter -->
+  <param name="use_gui" value="false" />
+  <node pkg="tf" type="static_transform_publisher" name="pizza_link_broadcaster" 
+    args="0.0 0.0 0. 0.0 0. 0. map pizza_plate/world 100">
+  </node>
+  <node pkg="tf" type="static_transform_publisher" name="cutter_link_broadcaster" 
+    args="0.0 0.0 0. 0.0 0. 0. map pizza_cutter/world 100">
+  </node>
+  <param name="pizza_description" textfile="$(find pizza_demo)/models/pizza_plate/pizza_plate.urdf" />
+  <param name="cutter_description" textfile="$(find pizza_demo)/models/pizza_cutter/pizza_cutter.urdf" />
+<!--
+  <node
+    name="pizza_joint_state_publisher"
+    pkg="joint_state_publisher"
+    type="joint_state_publisher" >
+    <remap from="robot_description" to="pizza_description"/>
+    <remap from="joint_states" to="pizza_joint_states"/>
+  </node>
+  <node
+    name="cutter_joint_state_publisher"
+    pkg="joint_state_publisher"
+    type="joint_state_publisher" >
+    <remap from="robot_description" to="cutter_description"/>
+    <remap from="joint_states" to="cutter_joint_states"/>
+  </node>
+  <node name="pizza_state_publisher"
+    pkg="robot_state_publisher"
+    type="state_publisher" >
+    <param name="tf_prefix" value="pizza_plate"/>
+    <remap from="robot_description" to="pizza_description"/>
+    <remap from="joint_states" to="pizza_joint_states"/>
+    <param name="publish_frequency" value="10"/>
+  </node>
+  <node name="cutter_state_publisher"
+    pkg="robot_state_publisher"
+    type="state_publisher" >
+    <param name="tf_prefix" value="pizza_cutter"/>
+    <remap from="robot_description" to="cutter_description"/>
+    <remap from="joint_states" to="cutter_joint_states"/>
+    <param name="publish_frequency" value="10"/>
+  </node>
+-->
+  <node name="spawn_pizza" pkg="gazebo_ros" type="spawn_model" args="
+    -param pizza_description 
+    -urdf
+    -x -0.75 -y 1.5 -z 0.95 -R 0.0 -P 0.0 -Y 0.0
+    -model pizza_plate"/>
+  <node name="spawn_cutter" pkg="gazebo_ros" type="spawn_model" args="
+    -param cutter_description 
+    -urdf
+    -x -0.6 -y 1.2 -z 0.95 -R 0.0 -P -1.57 -Y 0.0
+    -model pizza_cutter"/>
+  <node name="gz2Tf" pkg="pizza_demo" type="gz2Tf.py" args="--whitelist pizza_plate,pizza_cutter --fixed-frame map"></node>
+
+  <!-- More tf related things -->
+  <!--<node name="static_world_frame" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom_combined 100" />-->
+
+  <!-- Web-related nodes for visualization in browser -->
+  <node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher" args="" respawn="true" output="screen" />
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+  
+  <!--TODO: get rid of these deps -->
+  <include file="$(find pr2_moveit_node)/launch/move_group.launch"/>
+  <include file="$(find pr2_moveit_node)/launch/nav_pcontroller.launch"/>
+  
+</launch>
+

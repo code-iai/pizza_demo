@@ -1,0 +1,10 @@
+<launch>
+  <!-- Start rviz with the configuration from chemlab_context package /-->
+  <arg name="pizza_rviz_config" default="$(find pizza_demo)/config/pizza_demo_visualization.rviz"/>
+  <node name="pizza_demo_visualization" 
+        pkg="rviz" 
+        type="rviz" 
+        respawn="true"
+        args="-d $(arg pizza_rviz_config)"/>
+ 
+</launch>
