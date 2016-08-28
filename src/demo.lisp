@@ -55,7 +55,7 @@
 (defparameter *pose-left-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
                                                        (cl-transforms:make-3d-vector 0.5 0.2 0.25)
-                                                       (cl-transforms:euler->quaternion :ax pi :az (/ pi -2))))
+                                                       (cl-transforms:euler->quaternion :az (/ pi -2))))
 
 (defparameter *pose-right-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
@@ -68,9 +68,9 @@
                                                                        (cl-transforms:euler->quaternion :ay (/ pi 2))))
 ;;;;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 (defparameter *side-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 -0.2 0.0)
-                                                                      (cl-transforms:euler->quaternion :az (/ pi -2))))
+                                                                      (cl-transforms:euler->quaternion :az (/ pi 2))))
 (defparameter *side-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.2 0.0)
-                                                                       (cl-transforms:euler->quaternion :az (/ pi 2))))
+                                                                       (cl-transforms:euler->quaternion :az (/ pi -2))))
 (defparameter *left-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
                                                                        (cl-transforms:make-3d-vector 0.35 0.35 0.15)
                                                                        (cl-transforms:make-quaternion 0 0 0 1)))
@@ -155,11 +155,11 @@
   (declare (ignore tf-transformer))
   (cond
     ((equal object-name "pizza_plate")
-      (cl-transforms-stamped:make-pose-stamped "odom_combined" 0
+      (cl-transforms-stamped:make-pose-stamped "map" 0
                                                (cl-transforms:make-3d-vector -0.20 1.75 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))
     ((equal object-name "bread")
-      (cl-transforms-stamped:make-pose-stamped "odom_combined" 0
+      (cl-transforms-stamped:make-pose-stamped "map" 0
                                                (cl-transforms:make-3d-vector -0.20 1.35 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))))
 
@@ -234,11 +234,11 @@
   (cond
     ((equal tool-name "pizza_cutter")
       (if (equal arm :left)
-        (cl-transforms:make-3d-vector 0 0 0.5)
-        (cl-transforms:make-3d-vector 0 0 0)))
+        (cl-transforms:make-3d-vector 0 0 0.22)
+        (cl-transforms:make-3d-vector 0 0 0.12)))
     ((equal tool-name "knife")
       (if (equal arm :left)
-        (cl-transforms:make-3d-vector 0.5 0 0)
+        (cl-transforms:make-3d-vector 0.05 0 0)
         (cl-transforms:make-3d-vector 0 0 0)))))
 
 ;;;;;;; !!!!!!!!!!!!!!!!!!!!!
@@ -255,7 +255,7 @@
          (tool-point (cl-transforms:transform* tool-point grab-transform))
          (grab-translation (cl-transforms:translation tool-point))
          (grab-rotation (cl-transforms:rotation tool-point))
-         (grab (cl-transforms-stamped:make-pose-stamped "odom_combined" 0 grab-translation grab-rotation))
+         (grab (cl-transforms-stamped:make-pose-stamped "map" 0 grab-translation grab-rotation))
          (approach-v (cond
                        ((equal tool-name "pizza_cutter")
                          (if (equal arm-grab-type :pickup)
@@ -268,8 +268,8 @@
                            (if (equal arm-grab-type :pickup)
                              :above
                              (if (equal arm :left)
-                               :above
-                               :under)))
+                               :under
+                               :above)))
                          ((equal tool-name "knife")
                            :above)))
          (pregrab (get-prepose grab approach-v approach-dir)))
@@ -293,7 +293,7 @@
 
 (defun reset-skeleton-markers ()
   (roslisp:publish (ensure-mrk-publisher) (roslisp:make-message "visualization_msgs/Marker"
-                                                                :header (roslisp:make-message "std_msgs/Header" :frame_id "odom_combined" :stamp 0)
+                                                                :header (roslisp:make-message "std_msgs/Header" :frame_id "map" :stamp 0)
                                                                 :id 0
                                                                 :action 2
                                                                 :ns "cut-skeleton")))
@@ -301,20 +301,20 @@
 (defun update-markers (cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
   (declare (ignore tool-name) (ignore slices-marker))
   (place-skeleton-markers cut-skeleton-wrapper
-                          "odom_combined"
+                          "map"
                           :linked-frame object-name
-                          :base-to-link-transform (cl-tf:lookup-transform tf-transformer "odom_combined" object-name)))
+                          :base-to-link-transform (cl-tf:lookup-transform tf-transformer "map" object-name)))
 
 (defun place-object-group-markers (mrk-namespace object-name slices-marker &key location (alpha 1.0))
   (let* ((base-frame (if location
-                       "odom_combined"
+                       "map"
                        object-name))
-         (frame-locked (if location 1 0))
+         (frame-locked (if location 0 1))
          (obj-pose-msg (if location
                          (roslisp:make-message "geometry_msgs/Pose"
                                                :position (roslisp:make-message "geometry_msgs/Point" :x (cl-transforms:x (cl-transforms:translation location))
-                                                                                                     :y (cl-transforms:x (cl-transforms:translation location))
-                                                                                                     :z (cl-transforms:x (cl-transforms:translation location)))
+                                                                                                     :y (cl-transforms:y (cl-transforms:translation location))
+                                                                                                     :z (cl-transforms:z (cl-transforms:translation location)))
                                                :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x (cl-transforms:x (cl-transforms:rotation location))
                                                                                                              :y (cl-transforms:y (cl-transforms:rotation location))
                                                                                                              :z (cl-transforms:z (cl-transforms:rotation location))
@@ -483,10 +483,10 @@
          (x-o (cl-transforms:rotate (cl-transforms:rotation transform-b) x-dir))
          (x-prod (cl-transforms:dot-product x-s x-o))
          (angle (abs (acos x-prod))))
-    (or (< translation-threshold translation-distance) (< angle-threshold angle))))
+    (and (> translation-threshold translation-distance) (> angle-threshold angle))))
 
 (defun reposition-object (object-name object-loc arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer)
-  (let* ((robot-loc (cl-tf:lookup-transform tf-transformer "odom_combined" "torso_lift_link"))
+  (let* ((robot-loc (cl-tf:lookup-transform tf-transformer "map" "torso_lift_link"))
          (grab-pose (get-object-reposition-grab object-name object-loc robot-loc suggested-transform maneuver-arm aux-arm))
          (release-pose (get-object-reposition-release object-name object-loc robot-loc suggested-transform maneuver-arm aux-arm))
          (pregrab-pose (get-prepose grab-pose :z :above))
@@ -497,7 +497,7 @@
       (move-arm-poses aux-arm (list pregrab-pose prerelease-pose release-pose))
       (on-release-object object-name aux-arm)
       (move-arm-poses aux-arm prerelease-pose)
-      (reposition-object object-name (cl-tf:lookup-transform tf-transformer "odom_combined" object-name)
+      (reposition-object object-name (cl-tf:lookup-transform tf-transformer "map" object-name)
                          arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer))))
 
 
@@ -522,7 +522,7 @@
 ;; Bigger plans
 
 (defun handover-tool (tool-name object-name first-arm second-arm tf-transformer first-arm-has-tool put-down)
-  (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "odom_combined" tool-name))
+  (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "map" tool-name))
          (first-arm-grab-locs (get-arm-grab-locs first-arm tool-name tool-loc :pickup))
          (first-arm-pregrab (first first-arm-grab-locs))
          (first-arm-grab (second first-arm-grab-locs))
@@ -540,7 +540,7 @@
       (move-arm-poses first-arm (list (get-handover-src-pose first-arm))))
 ;; If needed, do the handover here
     (when (not (equal first-arm second-arm))
-      (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "odom_combined" tool-name))
+      (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "map" tool-name))
              (arm-grab-type (if put-down
                               :pickup ;; not a typo :P
                               :use))
@@ -556,7 +556,7 @@
         (move-arm-poses first-arm (list (get-park-pose first-arm)))))
 ;; Depending on whether we need to do a put-down, either do the put-down, or just park the arm
     (if put-down
-      (let* ((object-loc (cl-tf:lookup-transform tf-transformer "odom_combined" object-name))
+      (let* ((object-loc (cl-tf:lookup-transform tf-transformer "map" object-name))
              (tool-loc (get-tool-place-locs second-arm object-name tool-name object-loc))
              (place-locs (get-arm-grab-locs second-arm tool-name tool-loc :pickup))
              (preplace-pose (first place-locs))
@@ -575,15 +575,15 @@
 ;; Only do something when there's something actually in the cut-skeleton
   (when (cut-skeleton cut-skeleton-wrapper)
 ;; Update the cut skeleton's transforms
-    (let* ((object-loc (cl-tf:lookup-transform tf-transformer "odom_combined" object-name))
+    (let* ((object-loc (cl-tf:lookup-transform tf-transformer "map" object-name))
            (skeleton-to-tool (get-skeleton-to-tool tool-name)))
       (setf (plan-to-environment-transform cut-skeleton-wrapper) object-loc)
       (setf (skeleton-to-tool-transform cut-skeleton-wrapper) skeleton-to-tool))
 ;; Update markers
     (update-markers cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
 ;; Do auxiliary maneuvers to assist cutting
-    (let* ((arm-capmap-loc (cl-tf:lookup-transform tf-transformer "odom_combined" "torso_lift_link"))
-           (object-loc (cl-tf:lookup-transform tf-transformer "odom_combined" object-name))
+    (let* ((arm-capmap-loc (cl-tf:lookup-transform tf-transformer "map" "torso_lift_link"))
+           (object-loc (cl-tf:lookup-transform tf-transformer "map" object-name))
            (pose-suggestions (suggest-placement-transform cut-skeleton-wrapper maneuver-arm arm-capmap-loc :reachability-map arm-capmap))
            (suggested-transform (get-valid-pose-suggestion pose-suggestions))
            (suggested-transform-viz (cl-transforms:make-transform (cl-transforms:v+ (cl-transforms:translation suggested-transform)
@@ -591,22 +591,22 @@
                                                                   (cl-transforms:rotation suggested-transform))))
       (place-object-group-markers "pose-suggestion" object-name slices-marker :location suggested-transform-viz :alpha 0.35)
       (roslisp:wait-duration 1)
-      (place-reachmap-markers pose-suggestions "odom_combined" object-loc)
+      (place-reachmap-markers pose-suggestions "map" object-loc)
       (reposition-object object-name object-loc arm-capmap-loc
                          suggested-transform maneuver-arm aux-arm tf-transformer)
       (setf (plan-to-environment-transform cut-skeleton-wrapper)
-            (cl-tf:lookup-transform tf-transformer "odom_combined" object-name))
+            (cl-tf:lookup-transform tf-transformer "map" object-name))
       (move-arm-poses aux-arm (get-park-pose aux-arm)))
 ;; Follow the skeleton segment: first, prepare the poses to send for the arm
     (let* ((segment (get-current-segment cut-skeleton-wrapper))
            (seg-prestart (segment-prestart segment))
-           (seg-prestart (cl-transforms-stamped:make-pose-stamped "odom_combined" 0 (cl-transforms:translation seg-prestart) (cl-transforms:rotation seg-prestart)))
+           (seg-prestart (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-prestart) (cl-transforms:rotation seg-prestart)))
            (seg-start (segment-start segment))
-           (seg-start (cl-transforms-stamped:make-pose-stamped "odom_combined" 0 (cl-transforms:translation seg-start) (cl-transforms:rotation seg-start)))
+           (seg-start (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-start) (cl-transforms:rotation seg-start)))
            (seg-end (segment-end segment))
-           (seg-end (cl-transforms-stamped:make-pose-stamped "odom_combined" 0 (cl-transforms:translation seg-end) (cl-transforms:rotation seg-end)))
+           (seg-end (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-end) (cl-transforms:rotation seg-end)))
            (seg-postend (segment-postend segment))
-           (seg-postend (cl-transforms-stamped:make-pose-stamped "odom_combined" 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend))))
+           (seg-postend (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend))))
 ;; Follow the current skeleton segment; do it a few times, for style
       (move-arm-poses maneuver-arm (list seg-prestart seg-start seg-end seg-start seg-end seg-start seg-end seg-postend (get-park-pose maneuver-arm)))
 ;; Finally, recur to do the remaining skeleton segments
@@ -618,13 +618,13 @@
   (let* ((tf-transformer cram-moveit::*transformer*)
          (cut-skeleton-wrapper (make-instance 'cut-skeleton-wrapper
                                               :skeleton-to-tool-transform (get-skeleton-to-tool tool-name)
-                                              :plan-to-environment-transform (cl-tf:lookup-transform tf-transformer "odom_combined" object-name)
+                                              :plan-to-environment-transform (cl-tf:lookup-transform tf-transformer "map" object-name)
                                               :cut-skeleton (mapcar (lambda (seg)
                                                                       (make-instance 'skeleton-segment
                                                                                      :segment-start (segment-start seg)
                                                                                      :segment-end (segment-end seg)
-                                                                                     :prestart (segment-prestart seg)
-                                                                                     :postend (segment-postend seg)))
+                                                                                     :segment-prestart (segment-prestart seg)
+                                                                                     :segment-postend (segment-postend seg)))
                                                                     (cut-skeleton cut-skeleton-wrapper))))
          (desired-base-pose (get-desired-base-pose object-name tf-transformer)))
     (place-object-group-markers "object-markers" object-name slices-marker)

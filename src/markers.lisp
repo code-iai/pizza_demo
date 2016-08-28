@@ -33,7 +33,7 @@
 
 (defparameter *pub-mrk* nil)
 
-(defparameter *base-link* "/odom_combined")
+(defparameter *base-link* "map")
 
 (defparameter *identity-pose* nil)
 (defparameter *identity-pose-msg* nil)
@@ -231,7 +231,7 @@
                                  (get-heatmap-color arg))
                                slice-scores))
          (reachmap-msg (roslisp:make-message "visualization_msgs/Marker"
-                                             :header (roslisp:make-message "std_msgs/Header" :frame_id "/odom_combined" :stamp 0)
+                                             :header (roslisp:make-message "std_msgs/Header" :frame_id "map" :stamp 0)
                                              :ns "reachmap-dump"
                                              :id 0
                                              :frame_locked nil
@@ -249,7 +249,7 @@
                                              :colors (coerce slice-colors 'vector))))
     (roslisp:publish (ensure-mrk-publisher) reachmap-msg)))
 
-(defun get-reachmap-markers (reachability-map arm-base-transform threshold &key (fixed-frame "/odom_combined"))
+(defun get-reachmap-markers (reachability-map arm-base-transform threshold &key (fixed-frame "map"))
   (let* ((scored-points (get-reachmap-scored-points reachability-map arm-base-transform threshold))
          (slice-points (mapcar #'first scored-points))
          (slice-points (mapcar #'cl-transforms:translation slice-points))

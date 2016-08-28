@@ -244,17 +244,17 @@
 
 (defun left-converged ()
   ;;(cl-giskard:left-arm-converged)
-  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "left_wrist_roll_link")))
+  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "left_wrist_roll_link")))
          (dummy (roslisp:wait-duration 1))
-         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "left_wrist_roll_link"))))
+         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "left_wrist_roll_link"))))
     (declare (ignore dummy))
     (< (cl-transforms-stamped:v-dist p1 p2) 0.004)))
 
 (defun right-converged ()
   ;;(cl-giskard:right-arm-converged)
-  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "right_wrist_roll_link")))
+  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "right_wrist_roll_link")))
          (dummy (roslisp:wait-duration 1))
-         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "right_wrist_roll_link"))))
+         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "right_wrist_roll_link"))))
     (declare (ignore dummy))
     (< (cl-transforms-stamped:v-dist p1 p2) 0.004)))
 
