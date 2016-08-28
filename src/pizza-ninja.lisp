@@ -112,8 +112,22 @@
       (roslisp:with-fields ((xe x) (ye y) (ze z)) end
         (first (interpret-maneuver-parameters "cut" (list xe ye ze xs ys zs)))))))
 
-(defun segment-angle (skeleton-segment)
-  (let* ((start (cl-transforms-stamped:translation (segment-start skeleton-segment)))
+(defun segment-angle (skeleton-segment arm-base-transform)
+  (let* ((xy-plane-pose (cl-transforms:make-transform (cl-transforms:make-3d-vector (cl-transforms:x (cl-transforms:translation arm-base-transform))
+                                                                                    (cl-transforms:y (cl-transforms:translation arm-base-transform))
+                                                                                    0)
+                                                      (cl-transforms:rotation arm-base-transform)))
+         (xy-plane-pose (cl-transforms:transform-inv xy-plane-pose))
+         (skeleton-segment (make-instance 'skeleton-segment
+                                          :segment-start (cl-transforms:transform* xy-plane-pose
+                                                                                   (cl-transforms:make-transform
+                                                                                     (cl-transforms:translation (segment-start skeleton-segment))
+                                                                                     (cl-transforms:euler->quaternion)))
+                                          :segment-end (cl-transforms:transform* xy-plane-pose
+                                                                                 (cl-transforms:make-transform
+                                                                                   (cl-transforms:translation (segment-end skeleton-segment))
+                                                                                   (cl-transforms:euler->quaternion)))))
+         (start (cl-transforms-stamped:translation (segment-start skeleton-segment)))
          (end (cl-transforms-stamped:translation (segment-end skeleton-segment))))
     (roslisp:with-fields ((xs x) (ys y) (zs z)) start
       (declare (ignore zs))
@@ -127,7 +141,8 @@
             0))))))
 
 (defun transform-skeleton-segment (skeleton-segment sk-to-tl pl-to-en prep-offset)
-  (let* ((map-to-env (cl-transforms:transform* pl-to-en sk-to-tl))
+  (let* ((segment-t (segment-start skeleton-segment))
+         (map-to-env (cl-transforms:transform* pl-to-en segment-t sk-to-tl (cl-transforms:transform-inv segment-t)))
          (segment-start (cl-transforms:transform* map-to-env (segment-start skeleton-segment)))
          (segment-end (cl-transforms:transform* map-to-env (segment-end skeleton-segment)))
          (segment-prestart (cl-transforms:transform* map-to-env prep-offset (segment-start skeleton-segment)))
@@ -181,7 +196,7 @@
 (defun get-segments-for-visualization (cut-skeleton-wrapper plan-to-environment-transform)
   (mapcar (lambda (segment)
             (let* ((segment (transform-skeleton-segment segment
-                                                        (skeleton-to-tool-transform cut-skeleton-wrapper) 
+                                                        *prep-offset* 
                                                         plan-to-environment-transform
                                                         *prep-offset*))
                    (segment-start (cl-transforms:translation (segment-start segment)))
@@ -229,17 +244,17 @@
 
 (defun left-converged ()
   ;;(cl-giskard:left-arm-converged)
-  (let* ((p1 (cl-transforms-stamped:translation (cl-giskard:get-left-arm-transform (ensure-tf-listener))))
+  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "left_wrist_roll_link")))
          (dummy (roslisp:wait-duration 1))
-         (p2 (cl-transforms-stamped:translation (cl-giskard:get-left-arm-transform (ensure-tf-listener)))))
+         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "left_wrist_roll_link"))))
     (declare (ignore dummy))
     (< (cl-transforms-stamped:v-dist p1 p2) 0.004)))
 
 (defun right-converged ()
   ;;(cl-giskard:right-arm-converged)
-  (let* ((p1 (cl-transforms-stamped:translation (cl-giskard:get-right-arm-transform (ensure-tf-listener))))
+  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "right_wrist_roll_link")))
          (dummy (roslisp:wait-duration 1))
-         (p2 (cl-transforms-stamped:translation (cl-giskard:get-right-arm-transform (ensure-tf-listener)))))
+         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "odom_combined" "right_wrist_roll_link"))))
     (declare (ignore dummy))
     (< (cl-transforms-stamped:v-dist p1 p2) 0.004)))
 
@@ -251,20 +266,20 @@
   (format t "RIGHT arm action for pose ~a~%" ps)
   (cl-giskard:send-right-arm-action ps))
 
-(defun follow-current-segment (cut-skeleton-wrapper &optional (tool-arm "right"))
-  (let* ((tool-arm (string-downcase tool-arm))
-         (get-arm-transform (if (equal tool-arm "left")
-                              #'cl-giskard:get-left-arm-transform
-                              #'cl-giskard:get-right-arm-transform))
-         (convergence-test (if (equal tool-arm "left")
-                             #'left-converged
-                             #'right-converged))
-         (arm-action (if (equal tool-arm "left")
-                       #'left-arm-action
-                       #'right-arm-action)))
-    (prep-segment cut-skeleton-wrapper convergence-test arm-action get-arm-transform)))
+;;(defun follow-current-segment (cut-skeleton-wrapper &optional (tool-arm "right"))
+;;  (let* ((tool-arm (string-downcase tool-arm))
+;;         (get-arm-transform (if (equal tool-arm "left")
+;;                              #'cl-giskard:get-left-arm-transform
+;;                              #'cl-giskard:get-right-arm-transform))
+;;         (convergence-test (if (equal tool-arm "left")
+;;                             #'left-converged
+;;                             #'right-converged))
+;;         (arm-action (if (equal tool-arm "left")
+;;                       #'left-arm-action
+;;                       #'right-arm-action)))
+;;    (prep-segment cut-skeleton-wrapper convergence-test arm-action get-arm-transform)))
 
-(defun suggest-placement-orientation (cut-skeleton-wrapper maneuver-arm)
+(defun suggest-placement-orientation (cut-skeleton-wrapper maneuver-arm arm-base-transform)
   (let* ((maneuver-arm (if (or (equal maneuver-arm :left) (equal maneuver-arm :right))
                          (if (equal maneuver-arm :left)
                            "left"
@@ -273,7 +288,7 @@
          (p-e-tran (cl-transforms-stamped:make-transform (cl-transforms-stamped:translation (plan-to-environment-transform cut-skeleton-wrapper))
                                                          (cl-transforms-stamped:make-quaternion 0 0 0 1)))
          (current-segment (get-current-segment cut-skeleton-wrapper))
-         (segment-angle (segment-angle current-segment))
+         (segment-angle (segment-angle current-segment arm-base-transform))
          ;;(dummy (format t "SEG-ANGLE ~a~%" segment-angle))
          (quarter-pi (atan 1))
          (pref-angle (if (equal maneuver-arm "left")
@@ -281,11 +296,10 @@
                          quarter-pi))
          (max-angle (+ pref-angle (* 2 quarter-pi)))
          (min-angle (- pref-angle (* 2 quarter-pi)))
-         ;;(dummy (format t "MAX, MIN, PREF ~a ~a ~a~%" max-angle min-angle pref-angle))
          (dummy (if (or (< max-angle segment-angle) (< segment-angle min-angle))
                   (setf (car (cut-skeleton cut-skeleton-wrapper)) (flip-segment (car (cut-skeleton cut-skeleton-wrapper))))))
          (current-segment (get-current-segment cut-skeleton-wrapper))
-         (segment-angle (segment-angle current-segment))
+         (segment-angle (segment-angle current-segment arm-base-transform))
          (rot-angle (- pref-angle segment-angle))
          (ortran (cl-transforms-stamped:make-transform (cl-transforms-stamped:make-3d-vector 0 0 0)
                                                        (cl-transforms-stamped:axis-angle->quaternion (vector 0.0 0.0 1.0) rot-angle))))
@@ -374,7 +388,7 @@
       nil)))
 
 (defun suggest-placement-transform (cut-skeleton-wrapper maneuver-arm arm-base-transform &key (reachability-map nil))
-  (let* ((orientation-transform (suggest-placement-orientation cut-skeleton-wrapper maneuver-arm))
+  (let* ((orientation-transform (suggest-placement-orientation cut-skeleton-wrapper maneuver-arm arm-base-transform))
          (segment-reachable (segment-reachable orientation-transform (get-current-segment cut-skeleton-wrapper) reachability-map)))
     (if (or segment-reachable (not reachability-map))
       (progn 

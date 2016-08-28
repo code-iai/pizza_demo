@@ -20,6 +20,18 @@
         <!--projection_type>perspective</projection_type-->
       </camera>
     </gui>
+
+    <include>
+     <name>pizza_cutter</name>
+     <uri>model://pizza_cutter</uri>
+     <pose>-0.95 1.5 0.9 0.0 1.57 0.0</pose>
+    </include>
+    <include>
+     <name>pizza_plate</name>
+     <uri>model://pizza_plate</uri>
+     <pose>-0.85 1.75 0.9 0 0 3.141</pose>
+    </include>
+
     
     <plugin name="attache" filename="libattache.so"/>
 

@@ -45,6 +45,8 @@
 
 (defparameter *pizza-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.7 :b 0.3))
 
+(defparameter *object-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.7 :b 0.3))
+
 (defparameter *slice-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.3 :g 0.8 :b 0.3))
 
 (defparameter *cut-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.3 :b 0.3))
@@ -79,13 +81,13 @@
       :position (roslisp:make-message "geometry_msgs/Point" :x x :y y :z z)
       :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x qx :y qy :z qz :w qw))))
 
-(defun make-mrk-msg (base-frame-name frame-locked id action pose color mesh-resource &key (alpha 1))
+(defun make-mrk-msg (base-frame-name frame-locked id action pose color mesh-resource &key (alpha 1) (namespace "cutplan"))
   (roslisp:with-fields (a r g b) color
     (let* ((color (roslisp:make-message "std_msgs/ColorRGBA" :a (* a alpha) :r r :g g :b b)))
       (roslisp:make-message "visualization_msgs/Marker"
                             :header (roslisp:make-message "std_msgs/Header" 
                                                           :frame_id base-frame-name :stamp 0)
-                                                          :ns "cutplan"
+                                                          :ns namespace
                                                           :id id
                                                           :frame_locked frame-locked
                                                           :type 10
@@ -97,25 +99,22 @@
                                                           :mesh_resource mesh-resource))))
 
 (defun place-plate-group-markers (where from-pizza-to-plate id-plate id-pizza id-slice base-frame &key (alpha 1) (linked-frame nil) (base-to-link-transform nil))
+  (declare (ignore id-plate))
   (let* ((linked-frame (if base-to-link-transform linked-frame nil))
          (where (if linked-frame 
                   (cl-transforms-stamped:transform* (cl-transforms-stamped:transform-inv base-to-link-transform) where)
                   where))
          (pizza-pose-msg (tr->ps where))
-         (plate-pose-msg (tr->ps (cl-transforms-stamped:transform* where from-pizza-to-plate)))
+         (slice-pose-msg (tr->ps (cl-transforms-stamped:transform* where (cl-transforms:transform-inv from-pizza-to-plate))))
          (base-frame (if linked-frame linked-frame base-frame))
          (frame-locked (if linked-frame 1 0))
-         (plate-msg (make-mrk-msg base-frame frame-locked id-plate 0 plate-pose-msg *plate-color* "package://cutplan/meshes/plate.stl" :alpha alpha))
-         (pizza-msg (make-mrk-msg base-frame frame-locked id-pizza 0 pizza-pose-msg *pizza-color* "package://cutplan/meshes/pizza.stl" :alpha alpha))
-         (slice-msg (make-mrk-msg base-frame frame-locked id-slice 0 pizza-pose-msg *slice-color* "package://cutplan/meshes/slice.stl" :alpha alpha)))
-    (roslisp:publish (ensure-mrk-publisher) plate-msg)
+         (pizza-msg (make-mrk-msg base-frame frame-locked id-pizza 0 pizza-pose-msg *pizza-color* "package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl" :alpha alpha))
+         (slice-msg (make-mrk-msg base-frame frame-locked id-slice 0 slice-pose-msg *slice-color* "package://pizza_demo/models/pizza_plate/meshes/slice.stl" :alpha alpha)))
     (roslisp:publish (ensure-mrk-publisher) pizza-msg)
     (roslisp:publish (ensure-mrk-publisher) slice-msg)))
 
 (defun place-skeleton-markers (cut-skeleton-wrapper base-frame &key (linked-frame nil) (base-to-link-transform nil))
   (let* ((where (plan-to-environment-transform cut-skeleton-wrapper))
-         ;;(auxtran (skeleton-to-tool-transform cut-skeleton-wrapper))
-         ;;(where (cl-transforms-stamped:transform* where auxtran))
          (linked-frame (if base-to-link-transform linked-frame nil))
          (where (if linked-frame 
                   (cl-transforms-stamped:transform* (cl-transforms-stamped:transform-inv base-to-link-transform) where)
@@ -124,7 +123,8 @@
          (frame-locked (if linked-frame 1 0))
          (segments (get-segments-for-visualization cut-skeleton-wrapper where))
          (points (apply #'append segments))
-         (first-segment (list (first points) (second points)))
+         (first-segment (when (and (first points) (second points))
+                          (list (first points) (second points))))
          (points (cdr (cdr points)))
          (first-seg-msg (roslisp:make-message "visualization_msgs/Marker"
                                               :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)

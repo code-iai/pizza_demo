@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
-  <model name="pizza_cutter">
-    <link name="pizza_cutter">
+  <model name="pizza_plate">
+    <link name="pizza_plate">
       <gravity>false</gravity>
       <inertial>
         <mass>0.02</mass>
       </inertial>
-      <collision name="pizza_cutter_collision">
+      <collision name="collision">
         <geometry><box><size>0.0001 0.0001 0.0001</size></box></geometry>
           <surface>
             <contact>
@@ -14,10 +14,10 @@
             </contact>
           </surface>
       </collision>
-      <visual name="pizza_cutter_visual">
+      <visual name="visual">
         <geometry>
           <mesh>
-            <uri>model://pizza_cutter/meshes/pizza_cutter.dae</uri>
+            <uri>model://pizza_plate/meshes/pizza_plate_visual.dae</uri>
           </mesh>
         </geometry>
       </visual>

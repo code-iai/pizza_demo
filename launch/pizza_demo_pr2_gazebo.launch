@@ -19,7 +19,7 @@
     <arg name="world_name" value="$(find pizza_demo)/worlds/empty_world_with_plugins.world"/>
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="true"/>
+    <arg name="gui" value="false"/>
     <arg name="headless" value="false"/>
     <arg name="debug" value="false"/>
   </include>
@@ -42,60 +42,6 @@
   <!-- Spawn the kitchen -->
   <include file="$(find iai_kitchen)/launch/gazebo_spawn_kitchen.launch"/>
 
-  <!-- Spawn pizza plate, pizza cutter -->
-  <param name="use_gui" value="false" />
-  <node pkg="tf" type="static_transform_publisher" name="pizza_link_broadcaster" 
-    args="0.0 0.0 0. 0.0 0. 0. map pizza_plate/world 100">
-  </node>
-  <node pkg="tf" type="static_transform_publisher" name="cutter_link_broadcaster" 
-    args="0.0 0.0 0. 0.0 0. 0. map pizza_cutter/world 100">
-  </node>
-  <param name="pizza_description" textfile="$(find pizza_demo)/models/pizza_plate/pizza_plate.urdf" />
-  <param name="cutter_description" textfile="$(find pizza_demo)/models/pizza_cutter/pizza_cutter.urdf" />
-<!--
-  <node
-    name="pizza_joint_state_publisher"
-    pkg="joint_state_publisher"
-    type="joint_state_publisher" >
-    <remap from="robot_description" to="pizza_description"/>
-    <remap from="joint_states" to="pizza_joint_states"/>
-  </node>
-  <node
-    name="cutter_joint_state_publisher"
-    pkg="joint_state_publisher"
-    type="joint_state_publisher" >
-    <remap from="robot_description" to="cutter_description"/>
-    <remap from="joint_states" to="cutter_joint_states"/>
-  </node>
-  <node name="pizza_state_publisher"
-    pkg="robot_state_publisher"
-    type="state_publisher" >
-    <param name="tf_prefix" value="pizza_plate"/>
-    <remap from="robot_description" to="pizza_description"/>
-    <remap from="joint_states" to="pizza_joint_states"/>
-    <param name="publish_frequency" value="10"/>
-  </node>
-  <node name="cutter_state_publisher"
-    pkg="robot_state_publisher"
-    type="state_publisher" >
-    <param name="tf_prefix" value="pizza_cutter"/>
-    <remap from="robot_description" to="cutter_description"/>
-    <remap from="joint_states" to="cutter_joint_states"/>
-    <param name="publish_frequency" value="10"/>
-  </node>
--->
-  <node name="spawn_pizza" pkg="gazebo_ros" type="spawn_model" args="
-    -param pizza_description 
-    -urdf
-    -x -0.75 -y 1.5 -z 0.95 -R 0.0 -P 0.0 -Y 0.0
-    -model pizza_plate"/>
-  <node name="spawn_cutter" pkg="gazebo_ros" type="spawn_model" args="
-    -param cutter_description 
-    -urdf
-    -x -0.6 -y 1.2 -z 0.95 -R 0.0 -P -1.57 -Y 0.0
-    -model pizza_cutter"/>
-  <node name="gz2Tf" pkg="pizza_demo" type="gz2Tf.py" args="--whitelist pizza_plate,pizza_cutter --fixed-frame map"></node>
-
   <!-- More tf related things -->
   <!--<node name="static_world_frame" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom_combined 100" />-->
 
@@ -106,6 +52,11 @@
   <!--TODO: get rid of these deps -->
   <include file="$(find pr2_moveit_node)/launch/move_group.launch"/>
   <include file="$(find pr2_moveit_node)/launch/nav_pcontroller.launch"/>
+
+  <!-- Spawn pizza plate, pizza cutter -->
+  <param name="pizza_description" textfile="$(find pizza_demo)/models/pizza_plate/pizza_plate.urdf" />
+  <param name="cutter_description" textfile="$(find pizza_demo)/models/pizza_cutter/pizza_cutter.urdf" />
+  <node name="gz2Tf" pkg="pizza_demo" type="gz2Tf.py" args="--whitelist pizza_plate,pizza_cutter --fixed-frame map"></node>
   
 </launch>
 

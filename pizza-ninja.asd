@@ -10,6 +10,7 @@
                :alexandria
                :cl-tf
                :meshproc_msgs-srv
+               :attache_msgs-srv
                :visualization_msgs-msg
                :cutplan-srv
                :cutplan
@@ -17,7 +18,9 @@
                :ros-load-manifest
                :roslisp-utilities
                :roslisp
+               :ros-load-manifest
                :pr2-reachability-costmap
+               :pr2-navigation-process-module
                :pr2-manipulation-process-module)
   :components
   ((:module "src"
