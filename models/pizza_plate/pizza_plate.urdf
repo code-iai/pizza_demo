@@ -16,7 +16,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.dae"/>
+        <mesh filename="package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl"/>
       </geometry>
     </visual>
     <collision>
