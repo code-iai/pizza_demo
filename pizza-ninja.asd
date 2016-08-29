@@ -19,6 +19,7 @@
                :roslisp-utilities
                :roslisp
                :ros-load-manifest
+               :cram-moveit-manager
                :pr2-reachability-costmap
                :pr2-navigation-process-module
                :pr2-manipulation-process-module)
