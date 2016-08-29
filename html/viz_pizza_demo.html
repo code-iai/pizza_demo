@@ -35,9 +35,18 @@
     // Setup a client to listen to TFs.
     var tfClient = new ROSLIB.TFClient({
       ros : ros,
+      fixedFrame : 'map',
       angularThres : 0.01,
       transThres : 0.01,
       rate : 10.0
+    });
+
+    // Setup the marker client.
+    var markerClient = new ROS3D.MarkerClient({
+      ros : ros,
+      tfClient : tfClient,
+      topic : '/visualization_marker',
+      rootObject : viewer.scene
     });
 
     // Setup the URDF client.
