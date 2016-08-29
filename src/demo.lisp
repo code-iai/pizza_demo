@@ -290,21 +290,21 @@
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.22) (cl-transforms:euler->quaternion :az pi)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.275 0 0.22) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.22) (cl-transforms:euler->quaternion)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.275 0 0.22) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
-                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.27) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.29) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                     ((equal arm :right)
                       (cond
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.12) (cl-transforms:euler->quaternion :az pi)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.275 0 0.12) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.12) (cl-transforms:euler->quaternion)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.275 0 0.12) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
-                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.27) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
+                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.29) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (grab (cond
                  ((equal arm :left)
                    (cond
@@ -595,7 +595,8 @@
     (unless first-arm-has-tool
       (move-arm-poses first-arm (list first-arm-pregrab first-arm-grab))
       (detach-model "IAI_kitchen" "room_link" tool-name tool-name)
-      (attach-model robot-name first-arm-eef-link tool-name tool-name))
+      (attach-model robot-name first-arm-eef-link tool-name tool-name)
+      (move-arm-poses first-arm first-arm-pregrab))
 ;; Depending on whether we need to change which arm has the tool, go to a handover or park pose
     (if (equal first-arm second-arm)
       (move-arm-poses first-arm (list (get-park-pose first-arm)))
