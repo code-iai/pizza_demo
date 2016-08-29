@@ -677,7 +677,7 @@
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker))))
 
 (cpl-impl:def-top-level-cram-function perform-cut (object-name tool-name cut-skeleton-wrapper slices-marker)
-  ;;(semantic-map-collision-environment:publish-semantic-map-collision-objects)
+  (semantic-map-collision-environment:publish-semantic-map-collision-objects)
   (let* ((tf-transformer cram-moveit::*transformer*)
          (cut-skeleton-wrapper (make-instance 'cut-skeleton-wrapper
                                               :skeleton-to-tool-transform (get-skeleton-to-tool tool-name)
