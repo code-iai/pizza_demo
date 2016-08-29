@@ -694,5 +694,6 @@
       (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t))))
 
 (defun start-scenario ()
+  (roslisp-utilities:startup-ros)
   (perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil))
 
