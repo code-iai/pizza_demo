@@ -54,12 +54,12 @@
 
 (defparameter *pose-left-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.5 0.2 0.25)
+                                                       (cl-transforms:make-3d-vector 0.5 0.2 0.22)
                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 
 (defparameter *pose-right-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.5 -0.2 0.25)
+                                                       (cl-transforms:make-3d-vector 0.5 -0.2 0.12)
                                                        (cl-transforms:euler->quaternion :az (/ pi 2))))
 
 (defparameter *above-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.25)
@@ -204,9 +204,8 @@
          (tool-loc (cl-transforms-stamped:make-transform-stamped
                      (cl-transforms-stamped:frame-id object-loc) tool-name 0
                      tool-pos
-;;;;;;; !!!!!!!!!!!!!!!!!!!
                      (if (equal tool-name "pizza_cutter")
-                       (cl-transforms:euler->quaternion :ay (/ pi 2))
+                       (cl-transforms:euler->quaternion :ay (/ pi -2))
                        (cl-transforms:euler->quaternion)))))
     tool-loc))
 
@@ -291,9 +290,9 @@
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.22) (cl-transforms:euler->quaternion)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.22) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.22) (cl-transforms:euler->quaternion :az pi)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.22) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.27) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                     ((equal arm :right)
@@ -301,9 +300,9 @@
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.12) (cl-transforms:euler->quaternion)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.12) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.12) (cl-transforms:euler->quaternion :az pi)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.12) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.27) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (grab (cond
@@ -312,9 +311,9 @@
                      ((equal tool-name "pizza_cutter")
                        (cond
                          ((equal arm-grab-type :pickup)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.22) (cl-transforms:euler->quaternion)))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.22) (cl-transforms:euler->quaternion :az pi)))
                          ((equal arm-grab-type :use)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.22) (cl-transforms:euler->quaternion :az pi)))))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.22) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
                        (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.22) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                  ((equal arm :right)
@@ -322,9 +321,9 @@
                      ((equal tool-name "pizza_cutter")
                        (cond
                          ((equal arm-grab-type :pickup)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.12) (cl-transforms:euler->quaternion)))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.12) (cl-transforms:euler->quaternion :az pi)))
                          ((equal arm-grab-type :use)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.12) (cl-transforms:euler->quaternion :az pi)))))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.12) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
                        (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.22) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (pregrab (cl-transforms:transform* tool-loc pregrab))
@@ -350,9 +349,9 @@
 (defun get-mesh-resource (object-name)
   (cond
     ((equal object-name "pizza_plate")
-      "package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl")
+      "https://svn.ai.uni-bremen.de/svn/sim_models/resources/pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl")
     ((equal object-name "bread")
-      "package://pizza_demo/models/bread/meshes/bread.stl")))
+      "https://svn.ai.uni-bremen.de/svn/sim_models/resources/pizza_demo/models/bread/meshes/bread.stl")))
 
 (defun reset-skeleton-markers ()
   (roslisp:publish (ensure-mrk-publisher) (roslisp:make-message "visualization_msgs/Marker"
@@ -585,7 +584,7 @@
 ;; Bigger plans
 
 (defun handover-tool (tool-name object-name first-arm second-arm tf-transformer first-arm-has-tool put-down)
-  (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "map" tool-name))
+  (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "torso_lift_link" tool-name))
          (first-arm-grab-locs (get-arm-grab-locs first-arm tool-name tool-loc :pickup))
          (first-arm-pregrab (first first-arm-grab-locs))
          (first-arm-grab (second first-arm-grab-locs))
@@ -603,7 +602,7 @@
       (move-arm-poses first-arm (list (get-handover-src-pose first-arm))))
 ;; If needed, do the handover here
     (when (not (equal first-arm second-arm))
-      (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "map" tool-name))
+      (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "torso_lift_link" tool-name))
              (arm-grab-type (if put-down
                               :pickup ;; not a typo :P
                               :use))
@@ -619,7 +618,7 @@
         (move-arm-poses first-arm (list (get-park-pose first-arm)))))
 ;; Depending on whether we need to do a put-down, either do the put-down, or just park the arm
     (if put-down
-      (let* ((object-loc (cl-tf:lookup-transform tf-transformer "map" object-name))
+      (let* ((object-loc (cl-tf:lookup-transform tf-transformer "torso_lift_link" object-name))
              (tool-loc (get-tool-place-locs second-arm object-name tool-name object-loc))
              (place-locs (get-arm-grab-locs second-arm tool-name tool-loc :pickup))
              (preplace-pose (first place-locs))
