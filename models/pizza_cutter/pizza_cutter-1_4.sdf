@@ -7,6 +7,7 @@
         <mass>0.02</mass>
       </inertial>
       <collision name="pizza_cutter_collision">
+        <origin xyz="0 0 0.17" rpy="0 0 0"/>
         <geometry><box><size>0.0001 0.0001 0.0001</size></box></geometry>
           <surface>
             <contact>

@@ -94,11 +94,13 @@
 (defun move-arm-poses (arm poses)
   (mot-man:execute-arm-action (mot-man:make-goal-specification
                                 :moveit-goal-specification
+                                :keys '((:raise-elbow (:left :right)))
                                 :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses)))))
 
 (defun move-arms-up ()
   (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
                                 :moveit-goal-specification
+                                :keys '((:raise-elbow (:left :right)))
                                 :arm-pose-goals (list `(:left ,*left-arm-up*)
                                                       `(:right ,*right-arm-up*)))))
 
