@@ -196,16 +196,18 @@
       (+ (* *bread-length* 0.5) 0.05))))
 
 (defun get-tool-place-locs (arm object-name tool-name object-loc)
-  (declare (ignore tool-name))
   (let* ((object-near (get-near-object-distance object-name))
          (tool-pos (cl-transforms:v+ (cl-transforms:translation object-loc)
                                      (if (equal arm :left)
-                                       (cl-transforms:make-3d-vector 0 object-near 0)
-                                       (cl-transforms:make-3d-vector 0 (- 0 object-near) 0))))
-         (tool-loc (cl-transforms:make-transform
+                                       (cl-transforms:make-3d-vector 0 (- 0 object-near) 0)
+                                       (cl-transforms:make-3d-vector 0 (+ 0 object-near) 0))))
+         (tool-loc (cl-transforms-stamped:make-transform-stamped
+                     (cl-transforms-stamped:frame-id object-loc) tool-name 0
                      tool-pos
-;;;;;;;;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     (cl-transforms:euler->quaternion))))
+;;;;;;; !!!!!!!!!!!!!!!!!!!
+                     (if (equal tool-name "pizza_cutter")
+                       (cl-transforms:euler->quaternion :ay (/ pi 2))
+                       (cl-transforms:euler->quaternion)))))
     tool-loc))
 
 ;;    Arm poses
@@ -242,7 +244,7 @@
         (cl-transforms:make-3d-vector 0 0 0)))))
 
 ;;;;;;; !!!!!!!!!!!!!!!!!!!!!
-(defun get-arm-grab-locs (arm tool-name tool-loc arm-grab-type)
+(defun get-arm-grab-locs-old (arm tool-name tool-loc arm-grab-type)
   (let* ((tool-point (cl-transforms:make-transform (get-tool-grab-point tool-name arm)
                                                    (cl-transforms:euler->quaternion)))
          (tool-point (cl-transforms:transform* tool-loc tool-point))
@@ -274,6 +276,60 @@
                            :above)))
          (pregrab (get-prepose grab approach-v approach-dir)))
     (list pregrab grab)))
+
+(defun get-arm-grab-locs (arm tool-name tool-loc arm-grab-type)
+  (let* ((pregrab (cond
+                    ((equal arm :left)
+                      (cond
+                        ((equal tool-name "pizza_cutter")
+                          (cond
+                            ((equal arm-grab-type :pickup)
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.22) (cl-transforms:euler->quaternion)))
+                            ((equal arm-grab-type :use)
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.22) (cl-transforms:euler->quaternion :az pi)))))
+                        ((equal tool-name "knife")
+                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.27) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+                    ((equal arm :right)
+                      (cond
+                        ((equal tool-name "pizza_cutter")
+                          (cond
+                            ((equal arm-grab-type :pickup)
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.25 0 0.12) (cl-transforms:euler->quaternion)))
+                            ((equal arm-grab-type :use)
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.25 0 0.12) (cl-transforms:euler->quaternion :az pi)))))
+                        ((equal tool-name "knife")
+                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.27) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
+         (grab (cond
+                 ((equal arm :left)
+                   (cond
+                     ((equal tool-name "pizza_cutter")
+                       (cond
+                         ((equal arm-grab-type :pickup)
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.22) (cl-transforms:euler->quaternion)))
+                         ((equal arm-grab-type :use)
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.22) (cl-transforms:euler->quaternion :az pi)))))
+                     ((equal tool-name "knife")
+                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.22) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+                 ((equal arm :right)
+                   (cond
+                     ((equal tool-name "pizza_cutter")
+                       (cond
+                         ((equal arm-grab-type :pickup)
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.12) (cl-transforms:euler->quaternion)))
+                         ((equal arm-grab-type :use)
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.12) (cl-transforms:euler->quaternion :az pi)))))
+                     ((equal tool-name "knife")
+                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.22) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
+         (pregrab (cl-transforms:transform* tool-loc pregrab))
+         (grab (cl-transforms:transform* tool-loc grab))
+         (pregrab (cl-transforms-stamped:make-pose-stamped (cl-transforms-stamped:frame-id tool-loc) 0
+                                                           (cl-transforms-stamped:translation pregrab)
+                                                           (cl-transforms-stamped:rotation pregrab)))
+         (grab (cl-transforms-stamped:make-pose-stamped (cl-transforms-stamped:frame-id tool-loc) 0
+                                                        (cl-transforms-stamped:translation grab)
+                                                        (cl-transforms-stamped:rotation grab))))
+    (list pregrab
+          grab)))
 
 (defun get-handover-src-pose (arm)
   (cond
@@ -636,4 +692,7 @@
       (handover-tool tool-name object-name tool-grabbing-arm maneuver-arm tf-transformer nil nil)
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
       (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t))))
+
+(defun start-scenario ()
+  (perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil))
 
