@@ -311,9 +311,9 @@
                      ((equal tool-name "pizza_cutter")
                        (cond
                          ((equal arm-grab-type :pickup)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.22) (cl-transforms:euler->quaternion :az pi)))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.22) (cl-transforms:euler->quaternion :az pi)))
                          ((equal arm-grab-type :use)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.22) (cl-transforms:euler->quaternion)))))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.22) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
                        (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.22) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                  ((equal arm :right)
