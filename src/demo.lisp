@@ -212,6 +212,13 @@
 
 ;;    Arm poses
 
+(defun get-park-pose (arm)
+  (cond
+    ((equal :left arm)
+      *left-eef-park*)
+    ((equal :right arm)
+      *right-eef-park*)))
+
 (defun get-prepose (pose world-vector-id from-direction &key (disp-step 0.05))
   (let* ((frame-id (cl-transforms-stamped:frame-id pose))
          (stamp (cl-transforms-stamped:stamp pose))
