@@ -30,10 +30,10 @@
 :- register_ros_package(comp_temporal).
 :- register_ros_package(knowrob_map_tools).
 
-/*
+/**/
 :- register_ros_package(pizza_demo).
 :- use_module(library('pizza_demo')).
-*/
+/**/
 
 :- register_ros_package(iai_semantic_maps).
 :- owl_parser:owl_parse('package://iai_semantic_maps/owl/kitchen.owl').
