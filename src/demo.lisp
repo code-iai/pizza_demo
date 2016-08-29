@@ -199,8 +199,8 @@
   (let* ((object-near (get-near-object-distance object-name))
          (tool-pos (cl-transforms:v+ (cl-transforms:translation object-loc)
                                      (if (equal arm :left)
-                                       (cl-transforms:make-3d-vector 0 (- 0 object-near) 0)
-                                       (cl-transforms:make-3d-vector 0 (+ 0 object-near) 0))))
+                                       (cl-transforms:make-3d-vector 0 (+ 0 object-near) 0)
+                                       (cl-transforms:make-3d-vector 0 (- 0 object-near) 0))))
          (tool-loc (cl-transforms-stamped:make-transform-stamped
                      (cl-transforms-stamped:frame-id object-loc) tool-name 0
                      tool-pos
