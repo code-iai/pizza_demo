@@ -12,8 +12,8 @@
                :meshproc_msgs-srv
                :attache_msgs-srv
                :visualization_msgs-msg
-               :cutplan-srv
-               :cutplan
+               ;;:cutplan-srv
+               ;;:cutplan
                :cl-giskard
                :ros-load-manifest
                :roslisp-utilities
