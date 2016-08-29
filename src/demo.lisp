@@ -349,9 +349,9 @@
 (defun get-mesh-resource (object-name)
   (cond
     ((equal object-name "pizza_plate")
-      "https://svn.ai.uni-bremen.de/svn/sim_models/resources/pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl")
+      "package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl")
     ((equal object-name "bread")
-      "https://svn.ai.uni-bremen.de/svn/sim_models/resources/pizza_demo/models/bread/meshes/bread.stl")))
+      "package://pizza_demo/models/bread/meshes/bread.stl")))
 
 (defun reset-skeleton-markers ()
   (roslisp:publish (ensure-mrk-publisher) (roslisp:make-message "visualization_msgs/Marker"
