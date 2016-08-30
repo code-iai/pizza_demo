@@ -679,7 +679,6 @@
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker))))
 
 (cpl-impl:def-top-level-cram-function perform-cut (object-name tool-name cut-skeleton-wrapper slices-marker)
-  (semantic-map-collision-environment:publish-semantic-map-collision-objects)
   (let* ((tf-transformer cram-moveit::*transformer*)
          (cut-skeleton-wrapper (make-instance 'cut-skeleton-wrapper
                                               :skeleton-to-tool-transform (get-skeleton-to-tool tool-name)
@@ -747,7 +746,14 @@
 
 (defun start-scenario ()
   (roslisp-utilities:startup-ros)
+  (semantic-map-collision-environment:publish-semantic-map-collision-objects)
   (prac2cram:prac2cram-server *pracsimserver-plan-matchings*)
   ;;(perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil)
-  (loop (roslisp:wait-duration 1)))
+  (let* ((a 1) (b 1))
+    (loop
+      (let ((c (rem (+ a b) 97)))
+        (roslisp:wait-duration 1)
+        (format t "Tick-tock ~a.~%" c)
+        (setf a b)
+        (setf b c)))))
 
