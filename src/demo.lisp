@@ -62,9 +62,9 @@
                                                        (cl-transforms:make-3d-vector 0.5 -0.2 0.12)
                                                        (cl-transforms:euler->quaternion :az (/ pi 2))))
 
-(defparameter *above-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.25)
+(defparameter *above-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.22)
                                                                       (cl-transforms:euler->quaternion :ay (/ pi 2))))
-(defparameter *above-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.25)
+(defparameter *above-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.22)
                                                                        (cl-transforms:euler->quaternion :ay (/ pi 2))))
 ;;;;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 (defparameter *side-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 -0.2 0.0)
@@ -201,8 +201,8 @@
   (let* ((object-near (get-near-object-distance object-name))
          (tool-pos (cl-transforms:v+ (cl-transforms:translation object-loc)
                                      (if (equal arm :left)
-                                       (cl-transforms:make-3d-vector 0 (+ 0 object-near) 0)
-                                       (cl-transforms:make-3d-vector 0 (- 0 object-near) 0))))
+                                       (cl-transforms:make-3d-vector 0.12 (+ 0 object-near) 0)
+                                       (cl-transforms:make-3d-vector 0.12 (- 0 object-near) 0))))
          (tool-loc (cl-transforms-stamped:make-transform-stamped
                      (cl-transforms-stamped:frame-id object-loc) tool-name 0
                      tool-pos
@@ -702,7 +702,46 @@
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
       (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t))))
 
+(defun perform-cut-get-args ()
+  (let* ((should-run-plan nil))
+    (values (if should-run-plan 0 -1)
+            nil
+            "Not implemented yet."
+            "")))
+
+(defun cut-test-get-args ()
+  (let* ((should-run-plan t)
+         (message "Will now cut out a particular slice of pizza.")
+;;;;;; !!!!!!!!
+         (args (list "pizza_plate" "pizza_cutter" *cut-skeleton-wrapper* nil))
+         (plan-string "(perform-cut pizza_plate pizza_cutter cut-skeleton-wrapper slices-marker)"))
+    (values (if should-run-plan 0 -1)
+            args
+            message
+            plan-string)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun pouring-get-args ()
+  (let* ((should-run-plan nil))
+    (values (if should-run-plan 0 -1)
+            nil
+            "Not implemented yet."
+            "")))
+
+(cpl-impl:def-top-level-cram-function pouring-top-level ()
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *pracsimserver-plan-matchings*
+              (list (cons "Cutting" (list #'perform-cut #'perform-cut-get-args))
+                    (cons "Pouring" (list #'pouring-top-level #'pouring-get-args))
+                    (cons "Cut-Test" (list #'perform-cut #'cut-test-get-args))))
+
 (defun start-scenario ()
   (roslisp-utilities:startup-ros)
-  (perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil))
+  (prac2cram:prac2cram-server *pracsimserver-plan-matchings*)
+  ;;(perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil)
+  (loop (roslisp:wait-duration 1)))
 

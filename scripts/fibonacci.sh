@@ -35,10 +35,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; Make sure the pizza-ninja package is loaded
-(roslisp:ros-info (pizza-demo) "Loading Pizza cutting demo.")
-(ros-load:load-system "pizza_demo" "pizza-ninja")
-(roslisp:ros-info (pizza-demo) "Pizza cutting demo loaded.")
+(defparameter a 1)
+(defparameter b 1)
 
-;; Start the scenario
-(pizza-ninja::start-scenario)
+(loop
+  (let* ((c (+ a b)))
+    (format t "~a~%" c)
+    (setf a b)
+    (setf b c)
+    (roslisp:wait-duration 1))
+
