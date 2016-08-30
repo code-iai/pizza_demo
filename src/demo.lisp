@@ -702,14 +702,21 @@
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
       (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t))))
 
-(defun perform-cut-get-args ()
+(defun perform-cut-get-args (&rest args)
+  (declare (ignore args))
   (let* ((should-run-plan nil))
     (values (if should-run-plan 0 -1)
             nil
             "Not implemented yet."
             "")))
 
-(defun cut-test-get-args ()
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(cpl-impl:def-top-level-cram-function con-test (&rest args)
+  (format t "Triggered a plan with args ~a~%" args))
+
+(defun cut-test-get-args (&rest args)
+  (declare (ignore args))
   (let* ((should-run-plan t)
          (message "Will now cut out a particular slice of pizza.")
 ;;;;;; !!!!!!!!
@@ -720,9 +727,8 @@
             message
             plan-string)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun pouring-get-args ()
+(defun pouring-get-args (&rest args)
+  (declare (ignore args))
   (let* ((should-run-plan nil))
     (values (if should-run-plan 0 -1)
             nil
