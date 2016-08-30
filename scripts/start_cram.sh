@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-"true";exec /usr/bin/env /usr/bin/sbcl --noinform --end-runtime-options --noprint --no-userinit --disable-debugger --script "$0" "$@"
+"true";exec /usr/bin/env /usr/bin/sbcl --noinform --dynamic-space-size 4096 --control-stack-size 8 --end-runtime-options --noprint --script "$0" "$@"
 
 
 (REQUIRE :ASDF)
