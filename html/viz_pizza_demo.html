@@ -87,6 +87,24 @@
       rootObject : viewer.scene,
       loader : ROS3D.COLLADA_LOADER
     });
+
+    var urdfClient5 = new ROS3D.UrdfClient({
+      ros : ros,
+      tfClient : tfClient,
+      param : 'bread_description',
+      path : 'http://svn.ai.uni-bremen.de/svn/sim_models/',
+      rootObject : viewer.scene,
+      loader : ROS3D.COLLADA_LOADER
+    });
+
+    var urdfClient6 = new ROS3D.UrdfClient({
+      ros : ros,
+      tfClient : tfClient,
+      param : 'knife_description',
+      path : 'http://svn.ai.uni-bremen.de/svn/sim_models/',
+      rootObject : viewer.scene,
+      loader : ROS3D.COLLADA_LOADER
+    });
 /**/
 
   }

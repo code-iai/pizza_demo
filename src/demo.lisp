@@ -79,6 +79,7 @@
                                                                        (cl-transforms:make-quaternion 0 0 0 1)))
 (defparameter *plate-radius* 0.2)
 (defparameter *bread-length* 0.3)
+(defparameter *bread-width* 0.07)
 
 (defparameter *cut-skeleton-wrapper* (create-cut-skeleton-wrapper (list 0.1 -0.15 0.01 0 0 0.01 0 0 0.01 0.07 0.17 0.01)
                                                                   (cl-transforms:make-identity-transform)
@@ -158,7 +159,7 @@
   (cond
     ((equal object-name "pizza_plate")
       (cl-transforms-stamped:make-pose-stamped "map" 0
-                                               (cl-transforms:make-3d-vector -0.20 1.75 0)
+                                               (cl-transforms:make-3d-vector -0.20 1.85 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))
     ((equal object-name "bread")
       (cl-transforms-stamped:make-pose-stamped "map" 0
@@ -701,15 +702,145 @@
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
       (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t))))
 
-(defun perform-cut-get-args (&rest args)
-  (declare (ignore args))
-  (let* ((should-run-plan nil))
-    (values (if should-run-plan 0 -1)
-            nil
-            "Not implemented yet."
-            "")))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; action_core: Cutting
+;; action_roles: ['action_verb', 'amount', 'obj_to_be_cut', 'unit', 'utensil']
+;; cram_plan: "(cut (an object (type {obj_to_be_cut}){obj_to_be_cut_props})(into (amount (a quantity (type {unit})(number {amount}))))(with (an object (type {utensil}){utensil_props})))"
+
+;; action_core: Pouring
+;; action_roles: ['stuff','goal','action_verb','unit','amount']
+;; required_action_roles: ['stuff','goal','action_verb']
+;; cram_plan: "(pour-from-container
+;;               (from (an object  (type container.n.01) (contains (some stuff (type {stuff}){stuff_props})))) (a quantity (type {unit})(number {amount})) (to (an object  (type {goal}){goal_props})))"
+
+(defun cleanup-action-roles (action-roles)
+  (let* ((action-roles (mapcar (lambda (action-role)
+                                 (roslisp:with-fields ((role-name role_name) (role-value role_value)) action-role
+                                   (let* ((point-pos (position #\. role-value))
+                                          (role-value (if point-pos
+                                                          (subseq role-value 0 point-pos)
+                                                          role-value)))
+                                     (list role-name role-value))))
+                               action-roles)))
+    action-roles))
+
+(defun objects-in-map (object-name tool-name)
+  (let* ((known-objects '(("pizza_plate" 1) ("pizza_cutter" 2) ("bread" 3) ("knife" 4))))
+    (and (assoc object-name known-objects :test #'equal) (assoc tool-name known-objects :test #'equal))))
+
+(defun get-yaw (loc)
+  (let* ((x-dir (cl-transforms:make-3d-vector 1 0 0))
+         (x-dir (cl-transforms:rotate (cl-transforms:rotation loc) x-dir)))
+    (atan (cl-transforms:y x-dir)
+          (cl-transforms:x x-dir))))
+
+(defun sanity-check (amount object-name)
+  (cond
+    ((equal object-name "pizza_plate")
+      (let* ((amount (if (< 1 amount)
+                       amount
+                       1))
+             (amount (if (< amount 7)
+                       amount
+                       7))
+             (amount (floor amount)))
+        amount))
+    ((equal object-name "bread")
+      (let* ((amount (if (< 0 amount)
+                       amount
+                       0))
+             (amount (if (< amount 10)
+                       amount
+                       10))
+             (amount (floor amount)))
+        amount))))
+
+(defun get-pizza-cut-skeleton-wrapper (amount)
+  (let* ((transformer cram-moveit::*transformer*)
+         (pizza-loc (cl-tf:lookup-transform transformer "map" "pizza_plate"))
+         (robot-at-pizza-loc (get-desired-base-pose "pizza_plate" transformer))
+         (amount (sanity-check amount "pizza_plate"))
+         (is-even (evenp amount))
+         (angle-increment (/ (* pi 2) amount))
+         (amount (if is-even
+                   (/ amount 2)
+                   amount))
+         (indices (alexandria:iota (- amount 1)))
+         (start-base (cl-transforms:make-3d-vector *plate-radius* 0 0.02))
+         (end-base (if is-even
+                     (cl-transforms:make-3d-vector (- 0 *plate-radius*) 0 0.02)
+                     (cl-transforms:make-3d-vector 0 0 0.02)))
+         (robot-angle (get-yaw robot-at-pizza-loc))
+         (plate-angle (get-yaw pizza-loc))
+         (convenience-angle (+ (- 0 (* (/ pi 4) 3)) (- 0 plate-angle) robot-angle))
+         (convenience-rotation (cl-transforms:euler->quaternion :az convenience-angle))
+         (segments (mapcar (lambda (k)
+                             (let* ((angle (* k angle-increment))
+                                    (z-rotation (cl-transforms:euler->quaternion :az angle))
+                                    (start (cl-transforms:rotate z-rotation start-base))
+                                    (end (cl-transforms:rotate z-rotation end-base)))
+                               (vector-pair->skeleton-segment (cl-transforms:rotate convenience-rotation start)
+                                                              (cl-transforms:rotate convenience-rotation end))))
+                           indices)))
+    (make-instance 'cut-skeleton-wrapper
+                   :cut-skeleton segments
+                   :skeleton-to-tool-transform (cl-transforms:make-identity-transform)
+                   :plan-to-environment-transform (cl-transforms:make-identity-transform))))
+
+(defun get-bread-cut-skeleton-wrapper (amount)
+  (let* ((amount (sanity-check amount "bread"))
+         (slice-thickness 0.015)
+         (indices (alexandria:iota amount))
+         (start-base (cl-transforms:make-3d-vector 0 (- 0 *bread-width*) 0.03))
+         (end-base (cl-transforms:make-3d-vector 0 *bread-width* 0.03))
+         (disp (cl-transforms:make-3d-vector (- 0 slice-thickness) 0 0))
+         (segments (mapcar (lambda (k)
+                             (let* ((k (+ k 1))
+                                    (disp (cl-transforms:v* disp k))
+                                    (start (cl-transforms:v+ start-base disp))
+                                    (end (cl-transforms:v+ end-base disp)))
+                               (vector-pair->skeleton-segment start end)))
+                           indices)))
+    (make-instance 'cut-skeleton-wrapper
+                   :cut-skeleton segments
+                   :skeleton-to-tool-transform (cl-transforms:make-identity-transform)
+                   :plan-to-environment-transform (cl-transforms:make-identity-transform))))
+
+(defun get-cut-skeleton-wrapper (object-name amount)
+  (cond
+    ((equal object-name "pizza_plate")
+      (get-pizza-cut-skeleton-wrapper amount))
+    ((equal object-name "pizza_plate")
+      (get-bread-cut-skeleton-wrapper amount))))
+
+(defun perform-cut-get-args (&rest action-roles)
+  (let* ((action-roles (cleanup-action-roles action-roles))
+         (object-name-input (car (cdr (assoc "obj_to_be_cut" action-roles :test #'equal))))
+         (object-name (if (equal object-name-input "pizza")
+                        "pizza_plate"
+                        object-name-input))
+         (tool-name (car (cdr (assoc "utensil" action-roles :test #'equal))))
+         (unit (car (cdr (assoc "unit" action-roles :test #'equal))))
+         (amount (car (cdr (assoc "amount" action-roles :test #'equal))))
+         (amount (if (typep amount 'string) (parse-integer amount :junk-allowed t) amount))
+         (should-run-plan (objects-in-map object-name tool-name))
+         (amount (when should-run-plan
+                   (sanity-check amount object-name)))
+         (cut-skeleton-wrapper (when should-run-plan
+                                 (get-cut-skeleton-wrapper object-name amount)))
+         (msg (if should-run-plan
+                (format nil "perform-cut using ~a to cut ~a ~a out of ~a~%" tool-name amount unit object-name-input)
+                (format nil "Object/tool pair (~a ~a) contains an unrecognized object.~%" object-name tool-name)))
+         (plan-string (if should-run-plan
+                        (format nil "(perform-cut ~a ~a cut-skeleton-wrapper)~%" object-name tool-name)
+                        (format nil "")))
+         (args (when should-run-plan
+                 (list object-name tool-name cut-skeleton-wrapper nil))))
+    (values (if should-run-plan 0 -1)
+            args
+            msg
+            plan-string)))
 
 (cpl-impl:def-top-level-cram-function con-test (&rest args)
   (format t "Triggered a plan with args ~a~%" args))

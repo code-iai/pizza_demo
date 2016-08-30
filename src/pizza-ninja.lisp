@@ -105,6 +105,16 @@
     (T
       (error "Unrecognized maneuver type ~a." maneuver-type))))
 
+(defun vector-pair->skeleton-segment (start end)
+  (let* ((xs (cl-transforms:x start))
+         (ys (cl-transforms:y start))
+         (zs (cl-transforms:z start))
+         (xe (cl-transforms:x end))
+         (ye (cl-transforms:y end))
+         (ze (cl-transforms:z end))
+         (maneuver-parameters (list xs ys zs xe ye ze)))
+    (car (interpret-maneuver-parameters "cut" maneuver-parameters))))
+
 (defun flip-segment (skeleton-segment)
   (let* ((start (cl-transforms-stamped:translation (segment-start skeleton-segment)))
          (end (cl-transforms-stamped:translation (segment-end skeleton-segment))))

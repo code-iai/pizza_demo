@@ -56,7 +56,9 @@
   <!-- Spawn pizza plate, pizza cutter -->
   <param name="pizza_description" textfile="$(find pizza_demo)/models/pizza_plate/pizza_plate.urdf" />
   <param name="cutter_description" textfile="$(find pizza_demo)/models/pizza_cutter/pizza_cutter.urdf" />
-  <node name="gz2Tf" pkg="pizza_demo" type="gz2Tf.py" args="--whitelist pizza_plate,pizza_cutter --fixed-frame map"></node>
+  <param name="bread_description" textfile="$(find pizza_demo)/models/bread/bread.urdf" />
+  <param name="knife_description" textfile="$(find pizza_demo)/models/knife/knife.urdf" />
+  <node name="gz2Tf" pkg="pizza_demo" type="gz2Tf.py" args="--whitelist pizza_plate,pizza_cutter,bread,knife --fixed-frame map"></node>
   
 </launch>
 

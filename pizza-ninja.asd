@@ -21,9 +21,30 @@
                :ros-load-manifest
                :cram-moveit-manager
                :prac2cram
-               :pr2-reachability-costmap
+               ;;:pr2-manipulation-process-module
+               ;;
+               cram-tf
+               cram-process-modules
+               actionlib
+               roslisp-utilities
+               cram-prolog
+               cram-plan-failures
+               cram-plan-occasions-events
+               cram-occasions-events
+               cram-pr2-description
+               pr2_controllers_msgs-msg
+               pr2_msgs-msg
+               pr2_msgs-srv
+               trivial-garbage
+               std_srvs-srv
+               alexandria
+               semantic-map-collision-environment
+               pr2_mechanism_msgs-srv
+               cram-motion-manager
+               cram-moveit
+               ;;
                :pr2-navigation-process-module
-               :pr2-manipulation-process-module)
+               :pr2-reachability-costmap)
   :components
   ((:module "src"
             :components
