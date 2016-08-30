@@ -39,9 +39,9 @@
 (defparameter b 1)
 
 (loop
-  (let* ((c (+ a b)))
+  (let* ((c (rem (+ a b) 97)))
     (format t "~a~%" c)
     (setf a b)
     (setf b c)
-    (roslisp:wait-duration 1))
+    (roslisp:wait-duration 1)))
 
