@@ -38,8 +38,8 @@
 (defparameter *identity-pose* nil)
 (defparameter *identity-pose-msg* nil)
 
-(defparameter *segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.5 :b 0.3))
-(defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.8 :b 0.3))
+(defparameter *segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.4 :b 0.9))
+(defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.9 :b 0.9))
 
 (defparameter *plate-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.8 :b 0.8))
 
