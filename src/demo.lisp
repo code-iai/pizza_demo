@@ -175,7 +175,7 @@
     ((equal tool-name "pizza_cutter")
       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0.15) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.195) (cl-transforms:make-quaternion 0 0 0 1)))))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.195) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
 
 ;;    Tool frame placement in arm
 
@@ -793,8 +793,8 @@
   (let* ((amount (sanity-check amount "bread"))
          (slice-thickness 0.015)
          (indices (alexandria:iota amount))
-         (start-base (cl-transforms:make-3d-vector 0 (- 0 *bread-width*) 0.03))
-         (end-base (cl-transforms:make-3d-vector 0 *bread-width* 0.03))
+         (start-base (cl-transforms:make-3d-vector *bread-length* (- 0 *bread-width*) 0.03))
+         (end-base (cl-transforms:make-3d-vector *bread-length* *bread-width* 0.03))
          (disp (cl-transforms:make-3d-vector (- 0 slice-thickness) 0 0))
          (segments (mapcar (lambda (k)
                              (let* ((k (+ k 1))
