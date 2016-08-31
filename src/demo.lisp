@@ -155,6 +155,8 @@
 ;;    Base
 
 (defun get-desired-base-pose (object-name tf-transformer)
+;;;;;;;;;;;;;;;;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Adjust based on actual pose of the object
+;;;;;;;;;;;;;;;;;; Also then reposition the object at the end, close to where it used to be.
   (declare (ignore tf-transformer))
   (cond
     ((equal object-name "pizza_plate")
@@ -163,7 +165,7 @@
                                                (cl-transforms:make-quaternion 0 0 1 0)))
     ((equal object-name "bread")
       (cl-transforms-stamped:make-pose-stamped "map" 0
-                                               (cl-transforms:make-3d-vector -0.20 1.35 0)
+                                               (cl-transforms:make-3d-vector -0.20 1.25 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))))
 
 ;;    Tool relative to skeleton
@@ -173,8 +175,7 @@
     ((equal tool-name "pizza_cutter")
       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0.15) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
-;;;;;;;;;;;;;;;;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0.15) (cl-transforms:make-quaternion 0 0 0 1)))))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.195) (cl-transforms:make-quaternion 0 0 0 1)))))
 
 ;;    Tool frame placement in arm
 
@@ -849,7 +850,7 @@
   (declare (ignore args))
   (let* ((should-run-plan t)
          (message "Will now cut out a particular slice of pizza.")
-;;;;;; !!!!!!!!
+;;;;;; !!!!!!!! Slices marker should not be nil, but a (mesh-path angle) pair
          (args (list "pizza_plate" "pizza_cutter" *cut-skeleton-wrapper* nil))
          (plan-string "(perform-cut pizza_plate pizza_cutter cut-skeleton-wrapper slices-marker)"))
     (values (if should-run-plan 0 -1)
