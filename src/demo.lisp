@@ -762,12 +762,15 @@
          (pizza-loc (cl-tf:lookup-transform transformer "map" "pizza_plate"))
          (robot-at-pizza-loc (get-desired-base-pose "pizza_plate" transformer))
          (amount (sanity-check amount "pizza_plate"))
+         (need-cuts (< 1 amount))
          (is-even (evenp amount))
          (angle-increment (/ (* pi 2) amount))
          (amount (if is-even
                    (/ amount 2)
                    amount))
-         (indices (alexandria:iota (- amount 1)))
+         (indices (if need-cuts
+                    (alexandria:iota amount)
+                    nil))
          (start-base (cl-transforms:make-3d-vector *plate-radius* 0 0.02))
          (end-base (if is-even
                      (cl-transforms:make-3d-vector (- 0 *plate-radius*) 0 0.02)
@@ -794,8 +797,8 @@
   (let* ((amount (sanity-check amount "bread"))
          (slice-thickness 0.015)
          (indices (alexandria:iota amount))
-         (start-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) (- 0 *bread-width*) 0.03))
-         (end-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) *bread-width* 0.03))
+         (start-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) (- 0 (* *bread-width* 0.5)) 0.03))
+         (end-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) (* *bread-width* 0.5) 0.03))
          (disp (cl-transforms:make-3d-vector (- 0 slice-thickness) 0 0))
          (segments (mapcar (lambda (k)
                              (let* ((k (+ k 1))
