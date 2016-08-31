@@ -306,8 +306,9 @@
                          quarter-pi))
          (max-angle (+ pref-angle (* 2 quarter-pi)))
          (min-angle (- pref-angle (* 2 quarter-pi)))
-         (dummy (if (or (< max-angle segment-angle) (< segment-angle min-angle))
-                  (setf (car (cut-skeleton cut-skeleton-wrapper)) (flip-segment (car (cut-skeleton cut-skeleton-wrapper))))))
+         ;;;; !!!!
+         ;;(dummy (if (or (< max-angle segment-angle) (< segment-angle min-angle))
+         ;;         (setf (car (cut-skeleton cut-skeleton-wrapper)) (flip-segment (car (cut-skeleton cut-skeleton-wrapper))))))
          (current-segment (get-current-segment cut-skeleton-wrapper))
          (segment-angle (segment-angle current-segment arm-base-transform))
          (rot-angle (- pref-angle segment-angle))

@@ -540,7 +540,7 @@
 
 ;; Repositioning maneuvers
 
-(defun close-enough (transform-a transform-b &key (translation-threshold 0.04) (angle-threshold 0.1))
+(defun close-enough (transform-a transform-b &key (translation-threshold 0.05) (angle-threshold 0.2))
   (let* ((translation-distance (cl-transforms-stamped:v-norm 
                                  (cl-transforms:v- (cl-transforms-stamped:translation transform-a)
                                                    (cl-transforms-stamped:translation transform-b))))
