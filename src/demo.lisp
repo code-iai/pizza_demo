@@ -849,7 +849,7 @@
                       ("pizza_plate" "pizza_cutter")
                       ("bread" "knife")))
          (unit (car (cdr (assoc "unit" action-roles :test #'equal))))
-         (amount (car (cdr (assoc "amount" action-roles :test #'equal))))
+         (amount (get-amount (car (cdr (assoc "amount" action-roles :test #'equal)))))
          (amount (if (typep amount 'string) (parse-integer amount :junk-allowed t) amount))
          (should-run-plan (objects-in-map object-name tool-name))
          (amount (when should-run-plan
