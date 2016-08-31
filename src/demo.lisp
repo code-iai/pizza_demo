@@ -772,8 +772,8 @@
          (end-base (if is-even
                      (cl-transforms:make-3d-vector (- 0 *plate-radius*) 0 0.02)
                      (cl-transforms:make-3d-vector 0 0 0.02)))
-         (robot-angle (get-yaw (cl-transforms:make-transform (cl-transforms:translation robot-at-pizza-loc)
-                                                             (cl-transforms:rotation robot-at-pizza-loc))))
+         (robot-angle (get-yaw (cl-transforms:make-transform (cl-transforms:origin robot-at-pizza-loc)
+                                                             (cl-transforms:orientation robot-at-pizza-loc))))
          (plate-angle (get-yaw pizza-loc))
          (convenience-angle (+ (- 0 (* (/ pi 4) 3)) (- 0 plate-angle) robot-angle))
          (convenience-rotation (cl-transforms:euler->quaternion :az convenience-angle))
