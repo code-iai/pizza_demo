@@ -573,7 +573,10 @@
   (let* ((torso-action (actionlib:make-action-client "/torso_controller/position_joint_action"
                                                      "pr2_controllers_msgs/SingleJointPositionAction")))
     (cpl-impl:par
-      (progn
+      (cpl-impl:with-failure-handling
+        ((sb-sys:deadline-timeout (f)
+           (declare (ignore f))
+           (cpl-impl:retry)))
         (actionlib:wait-for-server torso-action)
         (actionlib:send-goal-and-wait torso-action
                                       (actionlib:make-action-goal torso-action position 0.3)
@@ -726,6 +729,22 @@
                                action-roles)))
     action-roles))
 
+(defun get-amount (amount)
+  (if (typep amount 'string)
+    (case amount
+      ("zero" 0)
+      ("one" 1)
+      ("two" 2)
+      ("three" 3)
+      ("four" 4)
+      ("five" 5)
+      ("six" 6)
+      ("seven" 7)
+      ("eight" 8)
+      ("nine" 9)
+      (t amount))
+    amount))
+
 (defun objects-in-map (object-name tool-name)
   (let* ((known-objects '(("pizza_plate" 1) ("pizza_cutter" 2) ("bread" 3) ("knife" 4))))
     (and (assoc object-name known-objects :test #'equal) (assoc tool-name known-objects :test #'equal))))
@@ -825,7 +844,10 @@
          (object-name (if (equal object-name-input "pizza")
                         "pizza_plate"
                         object-name-input))
-         (tool-name "pizza_cutter");;(car (cdr (assoc "utensil" action-roles :test #'equal))))
+         ;;(tool-name (car (cdr (assoc "utensil" action-roles :test #'equal))))
+         (tool-name (case object-name
+                      ("pizza_plate" "pizza_cutter")
+                      ("bread" "knife")))
          (unit (car (cdr (assoc "unit" action-roles :test #'equal))))
          (amount (car (cdr (assoc "amount" action-roles :test #'equal))))
          (amount (if (typep amount 'string) (parse-integer amount :junk-allowed t) amount))
