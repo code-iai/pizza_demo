@@ -880,11 +880,12 @@
   (semantic-map-collision-environment:publish-semantic-map-collision-objects)
   (prac2cram:prac2cram-server *pracsimserver-plan-matchings*)
   ;;(perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil)
-  (let* ((a 1) (b 1))
+  (let* ((a 1) (b 1) (s 1))
     (loop
       (let ((c (rem (+ a b) 97)))
         (roslisp:wait-duration 1)
-        (format t "Tick-tock ~a.~%" c)
+        (format t "Tick-tock ~a: ~a.~%" s c)
+        (setf s (+ s 1))
         (setf a b)
         (setf b c)))))
 
