@@ -825,7 +825,7 @@
          (object-name (if (equal object-name-input "pizza")
                         "pizza_plate"
                         object-name-input))
-         (tool-name (car (cdr (assoc "utensil" action-roles :test #'equal))))
+         (tool-name "pizza_cutter");;(car (cdr (assoc "utensil" action-roles :test #'equal))))
          (unit (car (cdr (assoc "unit" action-roles :test #'equal))))
          (amount (car (cdr (assoc "amount" action-roles :test #'equal))))
          (amount (if (typep amount 'string) (parse-integer amount :junk-allowed t) amount))
