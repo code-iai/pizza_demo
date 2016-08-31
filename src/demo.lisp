@@ -812,7 +812,7 @@
   (cond
     ((equal object-name "pizza_plate")
       (get-pizza-cut-skeleton-wrapper amount))
-    ((equal object-name "pizza_plate")
+    ((equal object-name "bread")
       (get-bread-cut-skeleton-wrapper amount))))
 
 (defun perform-cut-get-args (&rest action-roles)
