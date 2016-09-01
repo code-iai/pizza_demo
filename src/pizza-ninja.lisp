@@ -151,12 +151,16 @@
             0))))))
 
 (defun transform-skeleton-segment (skeleton-segment sk-to-tl pl-to-en prep-offset)
-  (let* ((segment-t (segment-start skeleton-segment))
-         (map-to-env (cl-transforms:transform* pl-to-en segment-t sk-to-tl (cl-transforms:transform-inv segment-t)))
-         (segment-start (cl-transforms:transform* map-to-env (segment-start skeleton-segment)))
-         (segment-end (cl-transforms:transform* map-to-env (segment-end skeleton-segment)))
-         (segment-prestart (cl-transforms:transform* map-to-env prep-offset (segment-start skeleton-segment)))
-         (segment-postend (cl-transforms:transform* map-to-env prep-offset (segment-end skeleton-segment))))
+  (let* ((segment-t-start (segment-start skeleton-segment))
+         (segment-t-end (segment-end skeleton-segment))
+         (map-to-env-start (cl-transforms:transform* pl-to-en segment-t-start sk-to-tl (cl-transforms:transform-inv segment-t-start)))
+         (map-to-env-end (cl-transforms:transform* pl-to-en segment-t-end sk-to-tl (cl-transforms:transform-inv segment-t-end)))
+         (map-to-env-start-prep (cl-transforms:transform* pl-to-en segment-t-start prep-offset sk-to-tl (cl-transforms:transform-inv segment-t-start)))
+         (map-to-env-end-prep (cl-transforms:transform* pl-to-en segment-t-end prep-offset sk-to-tl (cl-transforms:transform-inv segment-t-end)))
+         (segment-start (cl-transforms:transform* map-to-env-start (segment-start skeleton-segment)))
+         (segment-end (cl-transforms:transform* map-to-env-end (segment-end skeleton-segment)))
+         (segment-prestart (cl-transforms:transform* map-to-env-start-prep (segment-start skeleton-segment)))
+         (segment-postend (cl-transforms:transform* map-to-env-end-prep (segment-end skeleton-segment))))
     (make-instance 'skeleton-segment
                    :segment-start segment-start
                    :segment-end segment-end
