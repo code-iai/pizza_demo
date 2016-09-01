@@ -730,20 +730,19 @@
     action-roles))
 
 (defun get-amount (amount)
-  (if (typep amount 'string)
-    (case amount
-      ("zero" 0)
-      ("one" 1)
-      ("two" 2)
-      ("three" 3)
-      ("four" 4)
-      ("five" 5)
-      ("six" 6)
-      ("seven" 7)
-      ("eight" 8)
-      ("nine" 9)
-      (t amount))
-    amount))
+  (cond
+    ((equal (string-downcase amount) "unknown") 1)
+    ((equal amount "zero") 0)
+    ((equal amount "one") 1)
+    ((equal amount "two") 2)
+    ((equal amount "three") 3)
+    ((equal amount "four") 4)
+    ((equal amount "five") 5)
+    ((equal amount "six") 6)
+    ((equal amount "seven") 7)
+    ((equal amount "eight") 8)
+    ((equal amount "nine") 9)
+    (t amount)))
 
 (defun objects-in-map (object-name tool-name)
   (let* ((known-objects '(("pizza_plate" 1) ("pizza_cutter" 2) ("bread" 3) ("knife" 4))))
@@ -845,9 +844,9 @@
                         "pizza_plate"
                         object-name-input))
          ;;(tool-name (car (cdr (assoc "utensil" action-roles :test #'equal))))
-         (tool-name (case object-name
-                      ("pizza_plate" "pizza_cutter")
-                      ("bread" "knife")))
+         (tool-name (cond
+                      ((equal object-name "pizza_plate") "pizza_cutter")
+                      ((equal object-name "bread") "knife")))
          (unit (car (cdr (assoc "unit" action-roles :test #'equal))))
          (amount (get-amount (car (cdr (assoc "amount" action-roles :test #'equal)))))
          (amount (if (typep amount 'string) (parse-integer amount :junk-allowed t) amount))
