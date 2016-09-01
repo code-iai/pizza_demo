@@ -175,7 +175,7 @@
     ((equal tool-name "pizza_cutter")
       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0.15) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.195) (cl-transforms:euler->quaternion :ay 0)))))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.195) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
 
 ;;    Tool frame placement in arm
 
@@ -525,6 +525,8 @@
          (suggested-transform (cl-transforms:transform* (cl-transforms:transform-inv robot-loc) suggested-transform))
          (robot-loc (cl-transforms:make-identity-transform))
          (obj-tr-inv (cl-transforms:transform-inv object-loc))
+;;;; !!!! Currently this assumes that objects' vertical axis is aligned to world-z. Should change in the future
+;;;; to handle repositioning of other object orientations, and to other repositionings, not just rotation around z axis.
          (angle (get-object-release-angle object-loc suggested-transform))
          (suggested-transform (cl-transforms:make-transform (cl-transforms:translation suggested-transform)
                                                             (cl-transforms:axis-angle->quaternion (cl-transforms:make-3d-vector 0 0 1) (- 0 angle))))
