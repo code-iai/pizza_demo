@@ -637,7 +637,22 @@
         (move-arm-poses second-arm (list (get-park-pose second-arm))))
       (move-arm-poses second-arm (list (get-park-pose second-arm))))))
 
-
+(defun get-seg-waypoints (start end step)
+  (let* ((start-pos (cl-transforms:origin start))
+         (end-pos (cl-transforms:origin end))
+         (seg (cl-transforms:v- end-pos start-pos))
+         (dist (cl-transforms:v-norm seg))
+         (step-adj (/ step dist))
+         (range (loop for k from 0 below 1 by step-adj collect k))
+         (range (if (< (car (last range)) 1)
+                  (append range '(1))
+                  range)))
+    (mapcar (lambda (r)
+              (cl-transforms-stamped:make-pose-stamped (cl-transforms-stamped:frame-id start) (cl-transforms-stamped:stamp start)
+                (cl-transforms:v+ (cl-transforms:origin start)
+                                  (cl-transforms:v* seg r))
+                (cl-transforms:orientation start)))
+            range)))
 
 (defun perform-cut-skeleton (cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
 ;; Reset skeleton markers
@@ -676,9 +691,17 @@
            (seg-end (segment-end segment))
            (seg-end (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-end) (cl-transforms:rotation seg-end)))
            (seg-postend (segment-postend segment))
-           (seg-postend (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend))))
+           (seg-postend (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend)))
+           (seg-waypoints (get-seg-waypoints seg-start seg-end 0.03)))
 ;; Follow the current skeleton segment; do it a few times, for style
-      (move-arm-poses maneuver-arm (list seg-prestart seg-start seg-end seg-start seg-end seg-start seg-end seg-postend (get-park-pose maneuver-arm)))
+      (move-arm-poses maneuver-arm 
+                      (append (list seg-prestart seg-start)
+                              seg-waypoints
+                              (reverse seg-waypoints)
+                              seg-waypoints
+                              (reverse seg-waypoints)
+                              seg-waypoints
+                              (list seg-postend (get-park-pose maneuver-arm))))
 ;; Finally, recur to do the remaining skeleton segments
       (pop-skeleton-segment cut-skeleton-wrapper)
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker))))
