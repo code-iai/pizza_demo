@@ -538,6 +538,7 @@
          (release-pose-stamped (cl-transforms-stamped:make-pose-stamped base-frame 0
                                                                         (cl-transforms:translation tool-point)
                                                                         (cl-transforms:rotation tool-point))))
+    (format t "GET-OBJECT-REPOSITION-RELEASE~%    ANGLE ~a OBJ ~a SGS ~a DSP ~a TOL ~a~%" angle object-loc suggested-transform displacement-transform tool-point)
     release-pose-stamped))
 
 ;; Repositioning maneuvers
