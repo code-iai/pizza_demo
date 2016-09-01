@@ -523,6 +523,7 @@
   (let* ((base-frame "torso_lift_link")
          (object-loc (cl-transforms:transform* (cl-transforms:transform-inv robot-loc) object-loc))
          (suggested-transform (cl-transforms:transform* (cl-transforms:transform-inv robot-loc) suggested-transform))
+         (sgs-input suggested-transform)
          (robot-loc (cl-transforms:make-identity-transform))
          (obj-tr-inv (cl-transforms:transform-inv object-loc))
 ;;;; !!!! Currently this assumes that objects' vertical axis is aligned to world-z. Should change in the future
@@ -538,7 +539,7 @@
          (release-pose-stamped (cl-transforms-stamped:make-pose-stamped base-frame 0
                                                                         (cl-transforms:translation tool-point)
                                                                         (cl-transforms:rotation tool-point))))
-    (format t "GET-OBJECT-REPOSITION-RELEASE~%    ANGLE ~a OBJ ~a SGS ~a DSP ~a TOL ~a~%" angle object-loc suggested-transform displacement-transform tool-point)
+    (format t "GET-OBJECT-REPOSITION-RELEASE~%    ANGLE ~a OBJ ~a SGS-INP ~a SGS ~a DSP ~a TOL ~a~%" angle object-loc sgs-input suggested-transform displacement-transform tool-point)
     release-pose-stamped))
 
 ;; Repositioning maneuvers
