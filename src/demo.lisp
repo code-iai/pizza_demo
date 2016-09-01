@@ -175,7 +175,7 @@
     ((equal tool-name "pizza_cutter")
       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0.15) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.195) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.195) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
 
 ;;    Tool frame placement in arm
 
