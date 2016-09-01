@@ -488,14 +488,19 @@
 
 (defun put-in-angle-range (angle)
   (if (< angle (- 0 pi))
-    (+ angle pi pi)
+    (put-in-angle-range (+ angle pi pi))
     (if (< pi angle)
-      (- angle pi pi)
+      (put-in-angle-range (- angle pi pi))
       angle)))
 
 (defun get-object-release-angle (object-transform suggested-transform)
   (let* ((object-angle (nth-value 1 (cl-transforms:quaternion->axis-angle (cl-transforms:rotation object-transform))))
+         (object-axis (cl-transforms:quaternion->axis-angle (cl-transforms:rotation object-transform)))
          (suggested-angle (nth-value 1 (cl-transforms:quaternion->axis-angle (cl-transforms:rotation suggested-transform))))
+         (suggested-axis (cl-transforms:quaternion->axis-angle (cl-transforms:rotation suggested-transform)))
+         (suggested-angle (if (< (cl-transforms:dot-product object-axis suggested-axis) 0)
+                            (- 0 suggested-angle)
+                            suggested-angle))
          (object-angle (put-in-angle-range object-angle))
          (suggested-angle (put-in-angle-range suggested-angle))
          (angle (put-in-angle-range (- suggested-angle object-angle)))
@@ -539,7 +544,6 @@
          (release-pose-stamped (cl-transforms-stamped:make-pose-stamped base-frame 0
                                                                         (cl-transforms:translation tool-point)
                                                                         (cl-transforms:rotation tool-point))))
-    (format t "GET-OBJECT-REPOSITION-RELEASE~%    ANGLE ~a OBJ ~a SGS-INP ~a SGS ~a DSP ~a TOL ~a~%" angle object-loc sgs-input suggested-transform displacement-transform tool-point)
     release-pose-stamped))
 
 ;; Repositioning maneuvers
