@@ -926,7 +926,7 @@
                         (format nil "(perform-cut ~a ~a cut-skeleton-wrapper)~%" object-name tool-name)
                         (format nil "")))
          (args (when should-run-plan
-                 (list object-name tool-name cut-skeleton-wrapper nil))))
+                 (list object-name tool-name cut-skeleton-wrapper amount nil))))
     (values (if should-run-plan 0 -1)
             args
             msg
@@ -940,7 +940,7 @@
   (let* ((should-run-plan t)
          (message "Will now cut out a particular slice of pizza.")
 ;;;;;; !!!!!!!! Slices marker should not be nil, but a (mesh-path angle) pair
-         (args (list "pizza_plate" "pizza_cutter" *cut-skeleton-wrapper* nil))
+         (args (list "pizza_plate" "pizza_cutter" *cut-skeleton-wrapper* 1 nil))
          (plan-string "(perform-cut pizza_plate pizza_cutter cut-skeleton-wrapper slices-marker)"))
     (values (if should-run-plan 0 -1)
             args
