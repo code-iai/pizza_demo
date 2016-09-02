@@ -152,7 +152,9 @@
          ;;                                                                   :x 0.01 :y 0.015 :z 0.015)
          ;;                                      :pose (tr->ps (cl-transforms:make-identity-transform))
          ;;                                      :color *segment-color*))
+(dummy (format t "SEGS ~a ~a~%" first-segment next-segments))
          (ids (alexandria:iota (length next-segments) :start 1))
+(dummy (format t "IDS ~a~%" ids))
          (next-seg-list (mapcar (lambda (segment id)
                                   (roslisp:make-message "visualization_msgs/Marker"
                                                         :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
@@ -167,6 +169,10 @@
                                                         :pose (tr->ps (cl-transforms:make-identity-transform))
                                                         :color *segment-color*))
                                 next-segments ids)))
+    (mapcar (lambda (id) 
+              (roslisp:publish (ensure-mrk-publisher) 
+                               (roslisp:make-message "visualization_msgs/Marker" :ns "cut-skeleton" :action 2 :id id)))
+            (alexandria:iota 10))
     (when first-seg-msg
       (roslisp:publish (ensure-mrk-publisher) first-seg-msg))
     (mapcar (lambda (msg)
