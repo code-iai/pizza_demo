@@ -90,6 +90,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun get-object-semmap-name (object-name)
+  (cond
+    ((equal object-name "pizza_plate") "http://knowrob.org/kb/IAI-kitchen.owl#Pizza_sfd49bhxbf")
+    ((equal object-name "pizza_cutter") "http://knowrob.org/kb/IAI-kitchen.owl#PizzaCutter_sfd49bhxbf")
+    ((equal object-name "bread") "http://knowrob.org/kb/IAI-kitchen.owl#Bread_sfd49bhxbf")
+    ((equal object-name "knife") "http://knowrob.org/kb/IAI-kitchen.owl#Knife_sfd49bhxbf")
+    (T "")))
+
 ;; Basic move functions
 
 (defun move-arm-poses (arm poses)
@@ -528,7 +536,6 @@
   (let* ((base-frame "torso_lift_link")
          (object-loc (cl-transforms:transform* (cl-transforms:transform-inv robot-loc) object-loc))
          (suggested-transform (cl-transforms:transform* (cl-transforms:transform-inv robot-loc) suggested-transform))
-         (sgs-input suggested-transform)
          (robot-loc (cl-transforms:make-identity-transform))
          (obj-tr-inv (cl-transforms:transform-inv object-loc))
 ;;;; !!!! Currently this assumes that objects' vertical axis is aligned to world-z. Should change in the future
@@ -559,7 +566,7 @@
          (angle (abs (acos x-prod))))
     (and (> translation-threshold translation-distance) (> angle-threshold angle))))
 
-(defun reposition-object (object-name object-loc arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer)
+(defun reposition-object (object-name object-loc arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer &optional (init-sup-man-count 0))
   (let* ((robot-loc (cl-tf:lookup-transform tf-transformer "map" "torso_lift_link"))
          (grab-pose (get-object-reposition-grab object-name object-loc robot-loc suggested-transform maneuver-arm aux-arm))
          (release-pose (get-object-reposition-release object-name object-loc robot-loc suggested-transform maneuver-arm aux-arm))
@@ -571,8 +578,10 @@
       (move-arm-poses aux-arm (list pregrab-pose prerelease-pose release-pose))
       (on-release-object object-name aux-arm)
       (move-arm-poses aux-arm prerelease-pose)
-      (reposition-object object-name (cl-tf:lookup-transform tf-transformer "map" object-name)
-                         arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer))))
+      (setf init-sup-man-count
+            (reposition-object object-name (cl-tf:lookup-transform tf-transformer "map" object-name)
+                               arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer (+ init-sup-man-count 1))))
+    init-sup-man-count))
 
 
 ;; Bring PR2 to a nice location for the task
@@ -662,7 +671,7 @@
                 (cl-transforms:orientation start)))
             range)))
 
-(defun perform-cut-skeleton (cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
+(defun perform-cut-skeleton (cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker &optional (init-sup-man-count 0))
 ;; Reset skeleton markers
   (reset-skeleton-markers)
 ;; Only do something when there's something actually in the cut-skeleton
@@ -685,8 +694,10 @@
       (place-object-group-markers "pose-suggestion" object-name slices-marker :location suggested-transform-viz :alpha 0.35)
       (roslisp:wait-duration 1)
       (place-reachmap-markers pose-suggestions "map" object-loc)
-      (reposition-object object-name object-loc arm-capmap-loc
-                         suggested-transform maneuver-arm aux-arm tf-transformer)
+      (setf init-sup-man-count
+            (+ (reposition-object object-name object-loc arm-capmap-loc
+                                  suggested-transform maneuver-arm aux-arm tf-transformer)
+               init-sup-man-count))
       (setf (plan-to-environment-transform cut-skeleton-wrapper)
             (cl-tf:lookup-transform tf-transformer "map" object-name))
       (move-arm-poses aux-arm (get-park-pose aux-arm)))
@@ -710,10 +721,20 @@
                               (list seg-postend (get-park-pose maneuver-arm))))
 ;; Finally, recur to do the remaining skeleton segments
       (pop-skeleton-segment cut-skeleton-wrapper)
-      (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker))))
+      (setf init-sup-man-count
+            (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name 
+                                  maneuver-arm aux-arm tf-transformer arm-capmap slices-marker
+                                  init-sup-man-count))))
+  init-sup-man-count)
 
-(cpl-impl:def-top-level-cram-function perform-cut (object-name tool-name cut-skeleton-wrapper slices-marker)
-  (let* ((tf-transformer cram-moveit::*transformer*)
+(cpl-impl:def-top-level-cram-function perform-cut (object-name tool-name cut-skeleton-wrapper amount slices-marker)
+  (cram-beliefstate:enable-logging t)
+  (cram-beliefstate::start-new-experiment)
+  (cram-beliefstate:set-metadata :robot "PR2" :creator "IAI"
+                                 :experiment "Cut with assistive maneuvers"
+                                 :description (format nil "Perform ~a cuts (so as to get ~a slices) on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) amount object-name tool-name))
+  (let* ((log-node-id (cram-beliefstate:start-node "Slicing" nil))
+         (tf-transformer cram-moveit::*transformer*)
          (cut-skeleton-wrapper (make-instance 'cut-skeleton-wrapper
                                               :skeleton-to-tool-transform (get-skeleton-to-tool tool-name)
                                               :plan-to-environment-transform (cl-tf:lookup-transform tf-transformer "map" object-name)
@@ -725,25 +746,29 @@
                                                                                      :segment-postend (segment-postend seg)))
                                                                     (cut-skeleton cut-skeleton-wrapper))))
          (desired-base-pose (get-desired-base-pose object-name tf-transformer)))
-    (cram-beliefstate:enable-logging t)
-    (cram-beliefstate::start-new-experiment)
-    (cram-beliefstate:set-metadata :robot "PR2" :creator "IAI" :experiment "Cut with assistive maneuvers" :description (format nil "Perform ~a cuts on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) object-name tool-name))
+    (cram-beliefstate::annotate-resource "toolUsed" (get-object-semmap-name tool-name) "knowrob")
+    (cram-beliefstate::annotate-resource "objectActedOn" (get-object-semmap-name object-name) "knowrob")
+    (cram-beliefstate::annotate-resource "numberOfSlices" amount "knowrob")
     (place-object-group-markers "object-markers" object-name slices-marker)
     (setup-pr2 desired-base-pose)
     (let* ((tool-grabbing-arm (get-tool-grabbing-arm object-name tool-name tf-transformer))
            (maneuver-arm (get-maneuver-arm object-name tool-name tf-transformer))
            (arm-capmap (get-arm-capmap maneuver-arm))
+           (supportive-maneuvers 0)
            (aux-arm (get-aux-arm object-name tool-name tf-transformer)))
       (handover-tool tool-name object-name tool-grabbing-arm maneuver-arm tf-transformer nil nil)
-      (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
-      (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t)))
-    (let* ((date-time (multiple-value-bind (second minute hour date month year) (get-decoded-time) (format nil "~d-~2,'0d-~2,'0d--~2,'0d:~2,'0d:~2,'0d" year month date hour minute second)))
-           (file-name (format nil "perform-cut-~a" date-time))
-           (dot-name (format nil "~a.dot" file-name))
-           (owl-name (format nil "~a.owl" file-name)))
-      (format t "Outputting log files~%    ~a~%    ~a~%" dot-name owl-name)
-      (cram-beliefstate:extract-dot-file dot-name)
-      (cram-beliefstate:extract-owl-file owl-name)))
+      (setf supportive-maneuvers
+            (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker))
+      (cram-beliefstate::annotate-resource "numberOfSupportiveManeuvers" supportive-maneuvers "knowrob")
+      (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t)
+      (cram-beliefstate:stop-node log-node-id)))
+  (let* ((pkg-path (namestring (ros-load:ros-package-path "pizza_demo")))
+         (date-time (multiple-value-bind (second minute hour date month year) (get-decoded-time) (format nil "~d-~2,'0d-~2,'0d--~2,'0d:~2,'0d:~2,'0d" year month date hour minute second)))
+         (file-name (format nil "~a/logs/perform-cut-~a" pkg-path date-time))
+         (dot-name (format nil "~a.dot" file-name))
+         (owl-name (format nil "~a.owl" file-name)))
+    (cram-beliefstate:extract-dot-file dot-name)
+    (cram-beliefstate:extract-owl-file owl-name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
