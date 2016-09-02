@@ -23,7 +23,7 @@
     </collision>
     <visual>
       <geometry>
-        <mesh filename="package://pizza_demo/models/knife/meshes/knife.stl"/>
+        <mesh filename="package://pizza_demo/models/knife/meshes/knife.dae"/>
       </geometry>
     </visual>
   </link>
