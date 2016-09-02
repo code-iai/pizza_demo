@@ -725,6 +725,9 @@
                                                                                      :segment-postend (segment-postend seg)))
                                                                     (cut-skeleton cut-skeleton-wrapper))))
          (desired-base-pose (get-desired-base-pose object-name tf-transformer)))
+    (cram-beliefstate:enable-logging)
+    (cram-beliefstate::start-new-experiment)
+    (cram-beliefstate:set-metadata :robot "PR2" :creator "IAI" :experiment "Cut with assistive maneuvers" :description (format nil "Perform ~a cuts on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) object-name tool-name))
     (place-object-group-markers "object-markers" object-name slices-marker)
     (setup-pr2 desired-base-pose)
     (let* ((tool-grabbing-arm (get-tool-grabbing-arm object-name tool-name tf-transformer))
@@ -733,7 +736,14 @@
            (aux-arm (get-aux-arm object-name tool-name tf-transformer)))
       (handover-tool tool-name object-name tool-grabbing-arm maneuver-arm tf-transformer nil nil)
       (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker)
-      (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t))))
+      (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t)))
+    (let* ((pkg-path (namestring (ros-load:ros-package-path "pizza_demo")))
+           (date-time (multiple-value-bind (second minute hour date month year) (get-decoded-time) (format nil "~d-~2,'0d-~2,'0d--~2,'0d:~2,'0d:~2,'0d" year month date hour minute second)))
+           (file-name (format nil "~a/logs/perform-cut-~a" pkg-path date-time))
+           (dot-name (format nil "~a.dot" file-name))
+           (owl-name (format nil "~a.owl" file-name)))
+      (cram-beliefstate:extract-dot-file dot-name)
+      (cram-beliefstate:extract-owl-file owl-name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

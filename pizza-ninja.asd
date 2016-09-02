@@ -42,6 +42,7 @@
                pr2_mechanism_msgs-srv
                cram-motion-manager
                cram-moveit
+               cram-beliefstate
                ;;
                :pr2-navigation-process-module
                :pr2-reachability-costmap)
