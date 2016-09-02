@@ -161,11 +161,11 @@
   (cond
     ((equal object-name "pizza_plate")
       (cl-transforms-stamped:make-pose-stamped "map" 0
-                                               (cl-transforms:make-3d-vector -0.20 1.85 0)
+                                               (cl-transforms:make-3d-vector -0.25 1.85 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))
     ((equal object-name "bread")
       (cl-transforms-stamped:make-pose-stamped "map" 0
-                                               (cl-transforms:make-3d-vector -0.20 1.25 0)
+                                               (cl-transforms:make-3d-vector -0.25 1.25 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))))
 
 ;;    Tool relative to skeleton
@@ -704,8 +704,6 @@
 ;; Follow the current skeleton segment; do it a few times, for style
       (move-arm-poses maneuver-arm 
                       (append (list seg-prestart seg-start)
-                              seg-waypoints
-                              (reverse seg-waypoints)
                               seg-waypoints
                               (reverse seg-waypoints)
                               seg-waypoints

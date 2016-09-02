@@ -134,7 +134,7 @@
                                               :action 0
                                               :type 5
                                               :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                           :x 0.005 :y 0.005 :z 0.005)
+                                                                           :x 0.015 :y 0.015 :z 0.015)
                                               :points (coerce first-segment 'vector)
                                               :pose (tr->ps (cl-transforms:make-identity-transform))
                                               :color *first-segment-color*))
@@ -147,7 +147,7 @@
                                                :type 5
                                                :points (coerce points 'vector)
                                                :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                            :x 0.005 :y 0.005 :z 0.005)
+                                                                            :x 0.015 :y 0.015 :z 0.015)
                                                :pose (tr->ps (cl-transforms:make-identity-transform))
                                                :color *segment-color*)))
     (roslisp:publish (ensure-mrk-publisher) first-seg-msg)
