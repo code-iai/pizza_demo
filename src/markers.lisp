@@ -132,26 +132,45 @@
                                               :id 0
                                               :frame_locked frame-locked
                                               :action 0
-                                              :type 5
+                                              :type 0
                                               :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                           :x 0.015 :y 0.015 :z 0.015)
+                                                                           :x 0.01 :y 0.015 :z 0.015)
                                               :points (coerce first-segment 'vector)
                                               :pose (tr->ps (cl-transforms:make-identity-transform))
                                               :color *first-segment-color*))
-         (second-seg-msg (roslisp:make-message "visualization_msgs/Marker"
-                                               :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
-                                               :ns "cut-skeleton"
-                                               :id 1
-                                               :frame_locked frame-locked
-                                               :action 0
-                                               :type 5
-                                               :points (coerce points 'vector)
-                                               :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                            :x 0.015 :y 0.015 :z 0.015)
-                                               :pose (tr->ps (cl-transforms:make-identity-transform))
-                                               :color *segment-color*)))
+         ;;(second-seg-msg (roslisp:make-message "visualization_msgs/Marker"
+         ;;                                      :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
+         ;;                                      :ns "cut-skeleton"
+         ;;                                      :id 1
+         ;;                                      :frame_locked frame-locked
+         ;;                                      :action 0
+         ;;                                      :type 5
+         ;;                                      :points (coerce points 'vector)
+         ;;                                      :scale (roslisp:make-message "geometry_msgs/Vector3"
+         ;;                                                                   :x 0.01 :y 0.015 :z 0.015)
+         ;;                                      :pose (tr->ps (cl-transforms:make-identity-transform))
+         ;;                                      :color *segment-color*))
+         (ids (alexandria:iota (- (/ (length points) 2) 1) :start 1))
+         (starts (select-every points 0 2))
+         (ends (select-every points 1 2))
+         (next-seg-list (mapcar (lambda (start end id)
+                                  (roslisp:make-message "visualization_msgs/Marker"
+                                                        :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
+                                                        :ns "cut-skeleton"
+                                                        :id id
+                                                        :frame_locked frame-locked
+                                                        :action 0
+                                                        :type 0
+                                                        :points (vector start end)
+                                                        :scale (roslisp:make-message "geometry_msgs/Vector3"
+                                                                                     :x 0.01 :y 0.015 :z 0.015)
+                                                        :pose (tr->ps (cl-transforms:make-identity-transform))
+                                                        :color *segment-color*))
+                                starts ends ids)))
     (roslisp:publish (ensure-mrk-publisher) first-seg-msg)
-    (roslisp:publish (ensure-mrk-publisher) second-seg-msg)))
+    (mapcar (lambda (msg)
+              (roslisp:publish (ensure-mrk-publisher) msg))
+            next-seg-list)))
 
 (defun get-heatmap-color (value)
   (let* ((blue 0)

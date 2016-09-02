@@ -369,7 +369,7 @@
   (roslisp:publish (ensure-mrk-publisher) (roslisp:make-message "visualization_msgs/Marker"
                                                                 :header (roslisp:make-message "std_msgs/Header" :frame_id "map" :stamp 0)
                                                                 :id 0
-                                                                :action 2
+                                                                :action 3
                                                                 :ns "cut-skeleton")))
 
 (defun update-markers (cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
@@ -575,7 +575,10 @@
     (unless (close-enough suggested-transform object-loc)
       (move-arm-poses aux-arm (list pregrab-pose grab-pose))
       (on-grab-object object-name aux-arm)
-      (move-arm-poses aux-arm (list pregrab-pose prerelease-pose release-pose))
+      (move-arm-poses aux-arm (list pregrab-pose prerelease-pose prerelease-pose))
+      (roslisp:wait-duration 0.2)
+      (move-arm-poses aux-arm (list prerelease-pose release-pose))
+      (roslisp:wait-duration 0.1)
       (on-release-object object-name aux-arm)
       (move-arm-poses aux-arm prerelease-pose)
       (setf init-sup-man-count
@@ -762,9 +765,8 @@
       (cram-beliefstate::annotate-resource "numberOfSupportiveManeuvers" supportive-maneuvers "knowrob")
       (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t)
       (cram-beliefstate:stop-node log-node-id)))
-  (let* ((pkg-path (namestring (ros-load:ros-package-path "pizza_demo")))
-         (date-time (multiple-value-bind (second minute hour date month year) (get-decoded-time) (format nil "~d-~2,'0d-~2,'0d--~2,'0d:~2,'0d:~2,'0d" year month date hour minute second)))
-         (file-name (format nil "~a/logs/perform-cut-~a" pkg-path date-time))
+  (let* ((date-time (multiple-value-bind (second minute hour date month year) (get-decoded-time) (format nil "~d-~2,'0d-~2,'0d--~2,'0d:~2,'0d:~2,'0d" year month date hour minute second)))
+         (file-name (format nil "perform-cut-~a" date-time))
          (dot-name (format nil "~a.dot" file-name))
          (owl-name (format nil "~a.owl" file-name)))
     (cram-beliefstate:extract-dot-file dot-name)
