@@ -169,7 +169,10 @@
                                 next-segments ids)))
     (mapcar (lambda (id) 
               (roslisp:publish (ensure-mrk-publisher) 
-                               (roslisp:make-message "visualization_msgs/Marker" :ns "cut-skeleton" :action 2 :id id)))
+                               (roslisp:make-message "visualization_msgs/Marker"
+                                                     :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
+                                                     :pose (tr->ps (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 12) (cl-transforms:euler->quaternion)))
+                                                     :ns "cut-skeleton" :action 2 :id id)))
             (alexandria:iota 10))
     (when first-seg-msg
       (roslisp:publish (ensure-mrk-publisher) first-seg-msg))
@@ -238,7 +241,8 @@
                                                                      slice-points)
                                                              'vector)
                                              :colors (coerce slice-colors 'vector))))
-    (mapcar (lambda (reachmap-msg) (roslisp:publish (ensure-mrk-publisher) reachmap-msg)) (subseq reachmap-msgs 0 100))
+    (mapcar (lambda (reachmap-msg) 
+              (roslisp:publish (ensure-mrk-publisher) reachmap-msg)) (subseq reachmap-msgs 0 100))
     (roslisp:publish (ensure-mrk-publisher) reachmap-msg)
     ))
 
