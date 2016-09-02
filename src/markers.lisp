@@ -152,7 +152,7 @@
          ;;                                                                   :x 0.01 :y 0.015 :z 0.015)
          ;;                                      :pose (tr->ps (cl-transforms:make-identity-transform))
          ;;                                      :color *segment-color*))
-         (ids (alexandria:iota (- (length next-segments) 1) :start 1))
+         (ids (alexandria:iota (length next-segments) :start 1))
          (next-seg-list (mapcar (lambda (segment id)
                                   (roslisp:make-message "visualization_msgs/Marker"
                                                         :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
