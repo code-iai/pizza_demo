@@ -725,7 +725,7 @@
                                                                                      :segment-postend (segment-postend seg)))
                                                                     (cut-skeleton cut-skeleton-wrapper))))
          (desired-base-pose (get-desired-base-pose object-name tf-transformer)))
-    (cram-beliefstate:enable-logging)
+    (cram-beliefstate:enable-logging t)
     (cram-beliefstate::start-new-experiment)
     (cram-beliefstate:set-metadata :robot "PR2" :creator "IAI" :experiment "Cut with assistive maneuvers" :description (format nil "Perform ~a cuts on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) object-name tool-name))
     (place-object-group-markers "object-markers" object-name slices-marker)

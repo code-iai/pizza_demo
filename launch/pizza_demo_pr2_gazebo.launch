@@ -60,7 +60,7 @@
   <param name="knife_description" textfile="$(find pizza_demo)/models/knife/knife.urdf" />
   <node name="gz2Tf" pkg="pizza_demo" type="gz2Tf.py" args="--whitelist pizza_plate,pizza_cutter,bread,knife --fixed-frame map"></node>
 
-  <node name="semrec" pkg="semrec" type="semrec"></node>
+  <node name="semrec_ros" pkg="semrec" type="semrec" args="" output="screen"></node>
   
 </launch>
 
