@@ -1037,7 +1037,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/head_v0/head_pan.dae"/>
       </geometry>
-      <material name="Blue"/>
+      <material name="Grey"/> <!-- Blue -->
     </visual>
     <collision>
       <geometry>
@@ -1074,7 +1074,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/head_v0/head_tilt.dae"/>
       </geometry>
-      <material name="Green"/>
+      <material name="Grey"/> <!-- Green -->
     </visual>
     <collision>
       <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
@@ -1106,7 +1106,7 @@
       <geometry>
         <box size="0.01 0.01 0.01"/>
       </geometry>
-      <material name="Blue"/>
+      <material name="Grey"/> <!-- Blue -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -1138,7 +1138,7 @@
       <geometry>
         <box size="0.01 0.01 0.01"/>
       </geometry>
-      <material name="Blue"/>
+      <material name="Grey"/> <!-- Blue -->
     </visual>
   </link>
   <!-- Prosilica Camera -->
@@ -1223,7 +1223,7 @@
       <geometry>
         <box size="0.02 0.12 0.05"/>
       </geometry>
-      <material name="Blue"/>
+      <material name="Grey"/> <!-- Blue -->
     </visual>
   </link>
   <!-- Wide camera is on robot right (hca1), narrow on left (hca2)? -->
@@ -1373,7 +1373,7 @@
   </gazebo>
   <!-- extensions -->
   <gazebo reference="wide_stereo_link">
-    <material value="PR2/Blue"/>
+    <material value="Grey"/> <!-- PR2/Blue -->
     <turnGravityOff value="true"/>
   </gazebo>
   <gazebo reference="wide_stereo_optical_frame">
@@ -1525,7 +1525,7 @@
   </gazebo>
   <!-- extensions -->
   <gazebo reference="narrow_stereo_link">
-    <material value="PR2/Blue"/>
+    <material value="Grey"/> <!-- PR2/Blue -->
     <turnGravityOff value="true"/>
   </gazebo>
   <gazebo reference="narrow_stereo_optical_frame">
@@ -1535,11 +1535,11 @@
   <!-- extensions -->
   <!-- Define link to stereo cameras, set origin relative to that -->
   <gazebo reference="double_stereo_double_stereo_link">
-    <material value="PR2/Blue"/>
+    <material value="Grey"/> <!-- PR2/Blue -->
   </gazebo>
   <!-- extensions -->
   <gazebo reference="sensor_mount_sensor_link">
-    <material value="PR2/Blue"/>
+    <material value="Grey"/> <!-- PR2/Blue -->
   </gazebo>
   <!-- Projector -->
   <joint name="projector_wg6802418_frame_joint" type="fixed">
@@ -1695,7 +1695,7 @@
         <hackBaseline>0</hackBaseline>
       </plugin>
     </sensor>
-    <material value="Gazebo/Red"/>
+    <material value="Grey"/><!-- Gazebo/Red -->
   </gazebo>
   <!-- kinect rgb sensor physical attachment -->
   <joint name="head_mount_kinect_rgb_joint" type="fixed">
@@ -1769,7 +1769,7 @@
         <hackBaseline>0</hackBaseline>
       </plugin>
     </sensor>
-    <material value="Gazebo/Red"/>
+    <material value="Grey"/><!-- Gazebo/Red -->
   </gazebo>
   <!-- prosilica sensor physical attachment -->
   <joint name="head_mount_prosilica_joint" type="fixed">
@@ -1882,7 +1882,7 @@
         <hackBaseline>0</hackBaseline>
       </plugin>
     </sensor>
-    <material value="Gazebo/Red"/>
+    <material value="Grey"/><!-- Gazebo/Red -->
   </gazebo>
   <joint name="laser_tilt_mount_joint" type="revolute">
     <axis xyz="0 1 0"/>
@@ -1906,7 +1906,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/tilting_laser_v0/tilting_hokuyo.dae"/>
       </geometry>
-      <material name="Red"/>
+      <material name="Grey"/><!-- Red -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -1994,7 +1994,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/shoulder_v0/shoulder_pan.dae"/>
       </geometry>
-      <material name="Blue"/>
+      <material name="Grey"/><!-- Blue -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.0 0 0.0"/>
@@ -2061,7 +2061,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/shoulder_v0/upper_arm_roll.stl"/>
       </geometry>
-      <material name="RollLinks"/>
+      <material name="Grey"/><!-- PR2/RollLinks -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2072,7 +2072,7 @@
   </link>
   <!-- extensions -->
   <gazebo reference="r_upper_arm_roll_link">
-    <material value="PR2/RollLinks"/>
+    <material value="Grey"/> <!-- PR2/RollLinks -->
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
   <gazebo reference="r_upper_arm_roll_joint">
@@ -2134,7 +2134,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/upper_arm_v0/upper_arm.dae"/>
       </geometry>
-      <material name="Green"/>
+      <material name="Grey"/><!-- Green -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2175,7 +2175,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/upper_arm_v0/forearm_roll.stl"/>
       </geometry>
-      <material name="RollLinks"/>
+      <material name="Grey"/><!-- PR2/RollLinks -->
     </visual>
     <!-- TODO: collision tag should be optional -->
     <collision>
@@ -2186,7 +2186,7 @@
     </collision>
   </link>
   <gazebo reference="r_forearm_roll_link">
-    <material value="PR2/RollLinks"/>
+    <material value="Grey"/> <!-- PR2/RollLinks -->
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
   <gazebo reference="r_forearm_roll_joint">
@@ -2329,7 +2329,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/forearm_v0/wrist_roll.stl"/>
       </geometry>
-      <material name="RollLinks"/>
+      <material name="Grey"/><!-- PR2/RollLinks -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2353,7 +2353,7 @@
   <!-- Wrist roll -->
   <gazebo reference="r_wrist_roll_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/RollLinks"/>
+    <material value="Grey"/><!-- PR2/RollLinks -->
   </gazebo>
   <gazebo reference="r_wrist_roll_joint">
     <fudgeFactor value="0.5"/>
@@ -2381,7 +2381,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/gripper_v0/gripper_palm.dae"/>
       </geometry>
-      <material name="Red"/>
+      <material name="Grey"/><!-- Red -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2580,7 +2580,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/gripper_v0/l_finger_tip.dae"/>
       </geometry>
-      <material name="Green"/>
+      <material name="Grey"/><!-- Green -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2615,7 +2615,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/gripper_v0/l_finger_tip.dae"/>
       </geometry>
-      <material name="Green"/>
+      <material name="Grey"/> <!-- Green -->
     </visual>
     <collision>
       <origin rpy="3.14159265359 0 0" xyz="0 0 0"/>
@@ -2826,19 +2826,19 @@
   </gazebo>
   <gazebo reference="r_gripper_motor_slider_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <gazebo reference="r_gripper_motor_screw_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <gazebo reference="r_gripper_l_parallel_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <gazebo reference="r_gripper_r_parallel_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <!-- fictitous joint that represents the gripper gap -->
   <!-- effort is the linear force at the gripper gap
@@ -2936,7 +2936,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/shoulder_v0/shoulder_pan.dae"/>
       </geometry>
-      <material name="Blue"/>
+      <material name="Grey"/> <!-- Blue -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.0 0 0.0"/>
@@ -3003,7 +3003,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/shoulder_v0/upper_arm_roll.stl"/>
       </geometry>
-      <material name="RollLinks"/>
+      <material name="Grey"/> <!-- PR2/RollLinks -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -3014,7 +3014,7 @@
   </link>
   <!-- extensions -->
   <gazebo reference="l_upper_arm_roll_link">
-    <material value="PR2/RollLinks"/>
+    <material value="Grey"/> <!-- PR2/RollLinks -->
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
   <gazebo reference="l_upper_arm_roll_joint">
@@ -3076,7 +3076,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/upper_arm_v0/upper_arm.dae"/>
       </geometry>
-      <material name="Green"/>
+      <material name="Grey"/> <!-- Green -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -3117,7 +3117,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/upper_arm_v0/forearm_roll.stl"/>
       </geometry>
-      <material name="RollLinks"/>
+      <material name="Grey"/> <!-- RollLinks -->
     </visual>
     <!-- TODO: collision tag should be optional -->
     <collision>
@@ -3128,7 +3128,7 @@
     </collision>
   </link>
   <gazebo reference="l_forearm_roll_link">
-    <material value="PR2/RollLinks"/>
+    <material value="Grey"/> <!-- PR2/RollLinks -->
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
   <gazebo reference="l_forearm_roll_joint">
@@ -3271,7 +3271,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/forearm_v0/wrist_roll.stl"/>
       </geometry>
-      <material name="RollLinks"/>
+      <material name="Grey"/> <!-- RollLinks -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -3295,7 +3295,7 @@
   <!-- Wrist roll -->
   <gazebo reference="l_wrist_roll_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/RollLinks"/>
+    <material value="Grey"/> <!-- PR2/RollLinks -->
   </gazebo>
   <gazebo reference="l_wrist_roll_joint">
     <fudgeFactor value="0.5"/>
@@ -3323,7 +3323,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/gripper_v0/gripper_palm.dae"/>
       </geometry>
-      <material name="Red"/>
+      <material name="Grey"/> <!-- Red -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -3522,7 +3522,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/gripper_v0/l_finger_tip.dae"/>
       </geometry>
-      <material name="Green"/>
+      <material name="Grey"/> <!-- Green -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -3557,7 +3557,7 @@
       <geometry>
         <mesh filename="package://pr2_description/meshes/gripper_v0/l_finger_tip.dae"/>
       </geometry>
-      <material name="Green"/>
+      <material name="Grey"/> <!-- Green -->
     </visual>
     <collision>
       <origin rpy="3.14159265359 0 0" xyz="0 0 0"/>
@@ -3768,19 +3768,19 @@
   </gazebo>
   <gazebo reference="l_gripper_motor_slider_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <gazebo reference="l_gripper_motor_screw_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <gazebo reference="l_gripper_l_parallel_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <gazebo reference="l_gripper_r_parallel_link">
     <turnGravityOff>true</turnGravityOff>
-    <material value="PR2/Red"/>
+    <material value="Grey"/> <!-- PR2/Red -->
   </gazebo>
   <!-- fictitous joint that represents the gripper gap -->
   <!-- effort is the linear force at the gripper gap

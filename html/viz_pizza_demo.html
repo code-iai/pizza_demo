@@ -55,6 +55,7 @@
     var urdfClient = new ROS3D.UrdfClient({
       ros : ros,
       tfClient : tfClient,
+      param : 'robot_description_nocol',
       path : 'http://svn.ai.uni-bremen.de/svn/sim_models/',
       rootObject : viewer.scene,
       loader : ROS3D.COLLADA_LOADER

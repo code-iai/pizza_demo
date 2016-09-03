@@ -59,6 +59,10 @@
   <param name="bread_description" textfile="$(find pizza_demo)/models/bread/bread.urdf" />
   <param name="knife_description" textfile="$(find pizza_demo)/models/knife/knife.urdf" />
   <node name="gz2Tf" pkg="pizza_demo" type="gz2Tf.py" args="--whitelist pizza_plate,pizza_cutter,bread,knife --fixed-frame map"></node>
+  <!-- A no-color version of the PR2, to be less distracting-->
+  <param name="robot_description_nocol" textfile="$(find pizza_demo)/models/pr2.urdf"/>
+
+
 
   <node name="semrec_ros" pkg="semrec" type="semrec" args="" output="screen"></node>
   
