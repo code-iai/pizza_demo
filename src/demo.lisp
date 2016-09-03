@@ -103,7 +103,6 @@
 (defun move-arm-poses (arm poses)
   (mot-man:execute-arm-action (mot-man:make-goal-specification
                                 :moveit-goal-specification
-                                :keys `((:raise-elbow (:left :right)))
                                 :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses)))))
 
 (defun move-arms-up ()
@@ -506,9 +505,12 @@
          (object-axis (cl-transforms:quaternion->axis-angle (cl-transforms:rotation object-transform)))
          (suggested-angle (nth-value 1 (cl-transforms:quaternion->axis-angle (cl-transforms:rotation suggested-transform))))
          (suggested-axis (cl-transforms:quaternion->axis-angle (cl-transforms:rotation suggested-transform)))
-         (suggested-angle (if (< (cl-transforms:dot-product object-axis suggested-axis) 0)
+         (suggested-angle (if (< (cl-transforms:z suggested-axis) 0)
                             (- 0 suggested-angle)
                             suggested-angle))
+         (object-angle (if (< (cl-transforms:z object-axis) 0)
+                         (- 0 object-angle)
+                         object-angle))
          (object-angle (put-in-angle-range object-angle))
          (suggested-angle (put-in-angle-range suggested-angle))
          (angle (put-in-angle-range (- suggested-angle object-angle)))
@@ -542,7 +544,7 @@
 ;;;; to handle repositioning of other object orientations, and to other repositionings, not just rotation around z axis.
          (angle (get-object-release-angle object-loc suggested-transform))
          (suggested-transform (cl-transforms:make-transform (cl-transforms:translation suggested-transform)
-                                                            (cl-transforms:axis-angle->quaternion (cl-transforms:make-3d-vector 0 0 1) (- 0 angle))))
+                                                            (cl-transforms:axis-angle->quaternion (cl-transforms:make-3d-vector 0 0 1) angle)))
          (displacement-transform (cl-transforms:transform* suggested-transform obj-tr-inv))
          (tool-point (get-object-reposition-grab object-name object-loc robot-loc suggested-transform maneuver-arm aux-arm))
          (tool-point (cl-transforms:make-transform (cl-transforms:origin tool-point)
@@ -575,10 +577,8 @@
     (unless (close-enough suggested-transform object-loc)
       (move-arm-poses aux-arm (list pregrab-pose grab-pose))
       (on-grab-object object-name aux-arm)
-      (move-arm-poses aux-arm (list pregrab-pose prerelease-pose prerelease-pose))
-      (roslisp:wait-duration 0.2)
-      (move-arm-poses aux-arm (list prerelease-pose release-pose))
-      (roslisp:wait-duration 0.1)
+      (move-arm-poses aux-arm (list pregrab-pose prerelease-pose))
+      (move-arm-poses aux-arm (list release-pose))
       (on-release-object object-name aux-arm)
       (move-arm-poses aux-arm prerelease-pose)
       (setf init-sup-man-count
@@ -736,7 +736,8 @@
   (cram-beliefstate:set-metadata :robot "PR2" :creator "IAI"
                                  :experiment "Cut with assistive maneuvers"
                                  :description (format nil "Perform ~a cuts (so as to get ~a slices) on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) amount object-name tool-name))
-  (let* ((log-node-id (cram-beliefstate:start-node "Slicing" nil))
+  (cram-beliefstate::set-experiment-meta-data "performedInMap" "http://knowrob.org/kb/IAI-kitchen.owl#IAIKitchenMap_PM580j" :type :resource :ignore-namespace t)
+  (let* ((log-node-id (cram-beliefstate:start-node "SLICING" nil))
          (tf-transformer cram-moveit::*transformer*)
          (cut-skeleton-wrapper (make-instance 'cut-skeleton-wrapper
                                               :skeleton-to-tool-transform (get-skeleton-to-tool tool-name)
@@ -752,6 +753,7 @@
     (cram-beliefstate::annotate-resource "toolUsed" (get-object-semmap-name tool-name) "knowrob")
     (cram-beliefstate::annotate-resource "objectActedOn" (get-object-semmap-name object-name) "knowrob")
     (cram-beliefstate::annotate-resource "numberOfSlices" amount "knowrob")
+    (cram-beliefstate::annotate-resource "numberOfCuts" (length (cut-skeleton cut-skeleton-wrapper)))
     (place-object-group-markers "object-markers" object-name slices-marker)
     (setup-pr2 desired-base-pose)
     (let* ((tool-grabbing-arm (get-tool-grabbing-arm object-name tool-name tf-transformer))
