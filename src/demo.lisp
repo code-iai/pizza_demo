@@ -54,12 +54,12 @@
 
 (defparameter *pose-left-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.5 0.2 0.22)
+                                                       (cl-transforms:make-3d-vector 0.55 0.2 0.20)
                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 
 (defparameter *pose-right-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.5 -0.2 0.12)
+                                                       (cl-transforms:make-3d-vector 0.55 -0.2 0.10)
                                                        (cl-transforms:euler->quaternion :az (/ pi 2))))
 
 (defparameter *above-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.22)
