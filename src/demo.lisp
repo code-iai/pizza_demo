@@ -101,16 +101,27 @@
 ;; Basic move functions
 
 (defun move-arm-poses (arm poses)
-  (mot-man:execute-arm-action (mot-man:make-goal-specification
-                                :moveit-goal-specification
-                                :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses)))))
+  (cpl-impl:with-failure-handling
+    ((cram-plan-failures:manipulation-pose-unreachable (f)
+       (declare (ignore f))
+       ;; A bit of a dirty hack, but all poses encountered in the plans should be reachable; nevertheless,
+       ;; MoveIt sometimes fails to plan.
+       (retry)))
+    (mot-man:execute-arm-action (mot-man:make-goal-specification
+                                  :moveit-goal-specification
+                                  :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses))))))
 
 (defun move-arms-up ()
-  (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
-                                :moveit-goal-specification
-                                :keys '((:raise-elbow (:left :right)))
-                                :arm-pose-goals (list `(:left ,*left-arm-up*)
-                                                      `(:right ,*right-arm-up*)))))
+  (cpl-impl:with-failure-handling
+    ((cram-plan-failures:manipulation-pose-unreachable (f)
+       (declare (ignore f))
+       ;; A bit of a dirty hack, see above.
+       (retry)))
+    (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
+                                  :moveit-goal-specification
+                                  :keys '((:raise-elbow (:left :right)))
+                                  :arm-pose-goals (list `(:left ,*left-arm-up*)
+                                                        `(:right ,*right-arm-up*))))))
 
 ;; Load capmap
 
