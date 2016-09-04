@@ -106,7 +106,7 @@
        (declare (ignore f))
        ;; A bit of a dirty hack, but all poses encountered in the plans should be reachable; nevertheless,
        ;; MoveIt sometimes fails to plan.
-       (retry)))
+       (cpl-impl:retry)))
     (mot-man:execute-arm-action (mot-man:make-goal-specification
                                   :moveit-goal-specification
                                   :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses))))))
