@@ -810,6 +810,7 @@
 
 (defun get-amount (amount)
   (cond
+    ((not amount) 4)
     ((equal (string-downcase amount) "unknown") 1)
     ((equal amount "zero") 0)
     ((equal amount "one") 1)
@@ -922,6 +923,9 @@
          (object-name (if (equal object-name-input "pizza")
                         "pizza_plate"
                         object-name-input))
+         (object-name (if (equal object-name "italian_bread")
+                        "bread"
+                        object-name))
          ;;(tool-name (car (cdr (assoc "utensil" action-roles :test #'equal))))
          (tool-name (cond
                       ((equal object-name "pizza_plate") "pizza_cutter")
