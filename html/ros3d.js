@@ -3778,6 +3778,10 @@ ROS3D.Viewer = function(options) {
     y : 3,
     z : 3
   };
+  var cameraLookAt = options.cameraLookAt || {x : 0, y : 0, z : 0};
+  var cameraDeltaHeading = options.cameraDeltaHeading || 0;
+  var cameraDeltaPitch = options.cameraDeltaPitch || 0;
+
   var cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
 
   // create the canvas to render to
@@ -3804,6 +3808,9 @@ ROS3D.Viewer = function(options) {
     camera : this.camera
   });
   this.cameraControls.userZoomSpeed = cameraZoomSpeed;
+  
+  this.cameraControls.rotateLeft(cameraHeading);  
+  this.cameraControls.rotateUp(cameraPitch);
 
   // lights
   this.scene.add(new THREE.AmbientLight(0x555555));
