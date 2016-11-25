@@ -3809,8 +3809,8 @@ ROS3D.Viewer = function(options) {
   });
   this.cameraControls.userZoomSpeed = cameraZoomSpeed;
   
-  this.cameraControls.rotateLeft(cameraHeading);  
-  this.cameraControls.rotateUp(cameraPitch);
+  this.cameraControls.rotateLeft(cameraDeltaHeading);  
+  this.cameraControls.rotateUp(cameraDeltaPitch);
 
   // lights
   this.scene.add(new THREE.AmbientLight(0x555555));
