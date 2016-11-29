@@ -47,7 +47,9 @@
 
   <!-- Web-related nodes for visualization in browser -->
   <node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher" args="" respawn="true" output="screen" />
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+    <arg name="port" value="$(optenv ROSBRIDGE_WEBPORT)" />
+  </include>
   
   <!--TODO: get rid of these deps -->
   <include file="$(find pr2_moveit_node)/launch/move_group.launch"/>
