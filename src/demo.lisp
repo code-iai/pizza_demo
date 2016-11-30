@@ -121,7 +121,7 @@
        ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
        (setf (cpl:value prac2cram:plan-error) T)
        ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
-       (retry)))
+       (cpl-impl:retry)))
     (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
                                   :moveit-goal-specification
                                   :keys '((:raise-elbow (:left :right)))
