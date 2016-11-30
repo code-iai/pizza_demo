@@ -104,8 +104,10 @@
   (cpl-impl:with-failure-handling
     ((cram-plan-failures:manipulation-pose-unreachable (f)
        (declare (ignore f))
-       ;; A bit of a dirty hack, but all poses encountered in the plans should be reachable; nevertheless,
-       ;; MoveIt sometimes fails to plan.
+       ;; So far, when encountered this meant the simulation was not recoverable
+       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
+       (setf (cpl:value prac2cram:plan-error) T)
+       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
        (cpl-impl:retry)))
     (mot-man:execute-arm-action (mot-man:make-goal-specification
                                   :moveit-goal-specification
@@ -115,7 +117,10 @@
   (cpl-impl:with-failure-handling
     ((cram-plan-failures:manipulation-pose-unreachable (f)
        (declare (ignore f))
-       ;; A bit of a dirty hack, see above.
+       ;; So far, when encountered this meant the simulation was not recoverable
+       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
+       (setf (cpl:value prac2cram:plan-error) T)
+       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
        (retry)))
     (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
                                   :moveit-goal-specification
