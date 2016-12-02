@@ -20,7 +20,7 @@ cut_test = [cut_a_slice]
 
 # call a method called 'reverse_string' with a single string argument
 #result = remote_server.prac2cram_client(cut_test)
-result = remote_server.start_simulation(cut_test)
+result = remote_server.prac2cram_client(cut_test)
 
 print "Server answered:" 
 print result
