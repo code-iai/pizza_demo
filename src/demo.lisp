@@ -928,7 +928,7 @@
          (object-name (if (equal object-name-input "pizza")
                         "pizza_plate"
                         object-name-input))
-         (object-name (if (equal object-name "italian_bread")
+         (object-name (if (member object-name '("italian_bread" "baguette" "baguet" "ciabatta") :test #'equal)
                         "bread"
                         object-name))
          ;;(tool-name (car (cdr (assoc "utensil" action-roles :test #'equal))))
