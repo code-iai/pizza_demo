@@ -1000,6 +1000,7 @@
         (roslisp:wait-duration 1)
         (format t "Tick-tock ~a: ~a.~%" s c)
         (setf s (+ s 1))
+        (setf s (if (<= 100 s) 0 s))
         (setf a b)
         (setf b c)))))
 
