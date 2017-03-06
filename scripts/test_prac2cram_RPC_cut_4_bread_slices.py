@@ -7,6 +7,7 @@ from tinyrpc import RPCClient
 
 rpc_client = RPCClient(
     JSONRPCProtocol(),
+    # HttpPostClientTransport('http://134.102.206.96:4040/')
     HttpPostClientTransport('http://127.0.0.1:4040/')
 )
 
@@ -19,7 +20,6 @@ cut_a_slice = {'action_cores': [{'action_core_name': 'Cutting', 'action_roles': 
 cut_test = {'execute': True, 'tasks': [cut_a_slice], 'clientId': '111'}
 
 # call a method called 'reverse_string' with a single string argument
-#result = remote_server.prac2cram_client(cut_test)
 result = remote_server.prac2cram_client(cut_test)
 
 print "Server answered:" 
