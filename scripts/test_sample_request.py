@@ -27,7 +27,7 @@ remote_server = rpc_client.get_proxy()
 
 
 cut_a_slice = {'action_cores': [{'action_core_name': 'Cutting', 'action_roles': [{'role_name': 'unit', 'role_value': 'piece.n.08'}, {'role_name': 'obj_to_be_cut', 'role_value': 'pizza.n.01'}, {'role_name': 'action_verb', 'role_value': 'cut.v.01'}, {'role_name': 'amount', 'role_value': 'two.n.01'}]}]}
-cut_test = ['execute': True, 'tasks': [cut_a_slice], 'clientId': '111']
+cut_test = {'execute': True, 'tasks': [cut_a_slice], 'clientId': '111'}
 
 # call a method called 'reverse_string' with a single string argument
 result = remote_server.prac2cram_client(cut_test)
