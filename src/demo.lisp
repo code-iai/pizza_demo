@@ -746,7 +746,7 @@
                                   init-sup-man-count))))
   init-sup-man-count)
 
-(cpl-impl:def-top-level-cram-function perform-cut (object-name tool-name cut-skeleton-wrapper amount slices-marker)
+(cpl-impl:def-cram-function perform-cut (object-name tool-name cut-skeleton-wrapper amount slices-marker)
   (cram-beliefstate:enable-logging t)
   (cram-beliefstate::start-new-experiment)
   (cram-beliefstate:set-metadata :robot "PR2" :creator "IAI"
@@ -956,7 +956,7 @@
             msg
             plan-string)))
 
-(cpl-impl:def-top-level-cram-function con-test (&rest args)
+(cpl-impl:def-cram-function con-test (&rest args)
   (format t "Triggered a plan with args ~a~%" args))
 
 (defun cut-test-get-args (&rest args)
@@ -979,10 +979,13 @@
             "Not implemented yet."
             "")))
 
-(cpl-impl:def-top-level-cram-function pouring-top-level ()
+(cpl-impl:def-cram-function pouring-top-level ()
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun cancel-function ()
+  )
 
 (defparameter *pracsimserver-plan-matchings*
               (list (cons "Cutting" (list #'perform-cut #'perform-cut-get-args))
@@ -992,7 +995,7 @@
 (defun start-scenario ()
   (roslisp-utilities:startup-ros)
   (semantic-map-collision-environment:publish-semantic-map-collision-objects)
-  (prac2cram:prac2cram-server *pracsimserver-plan-matchings*)
+  (prac2cram:prac2cram-server *pracsimserver-plan-matchings* #'cancel-function)
   ;;(perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil)
   (let* ((a 1) (b 1) (s 1))
     (loop
