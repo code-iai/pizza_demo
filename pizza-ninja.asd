@@ -11,6 +11,7 @@
                :cl-tf
                :meshproc_msgs-srv
                :attache_msgs-srv
+               :gazebo_msgs-srv
                :visualization_msgs-msg
                ;;:cutplan-srv
                ;;:cutplan

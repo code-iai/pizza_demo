@@ -86,6 +86,10 @@
                                                                   (cl-transforms:make-identity-transform)))
 
 
+(defparameter *initial-pose-pizza* nil)
+(defparameter *initial-pose-bread* nil)
+(defparameter *initial-pose-knife* nil)
+(defparameter *initial-pose-pizza-cutter* nil)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -984,8 +988,43 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun get-init-pose (object-name tf-transformer)
+  (let* ((transform (cl-tf:lookup-transform tf-transformer "map" object-name)))
+    (roslisp:make-message "geometry_msgs/Pose"
+                          :position (roslisp:make-message "geometry_msgs/Point"
+                                                          :x (cl-tf:x (cl-tf:translation transform))
+                                                          :y (cl-tf:y (cl-tf:translation transform))
+                                                          :z (cl-tf:z (cl-tf:translation transform)))
+                          :orientation (roslisp:make-message "geometry_msgs/Quaternion"
+                                                             :x (cl-tf:x (cl-tf:rotation transform))
+                                                             :y (cl-tf:y (cl-tf:rotation transform))
+                                                             :z (cl-tf:z (cl-tf:rotation transform))
+                                                             :w (cl-tf:w (cl-tf:rotation transform))))))
+
+(defun set-gazebo-object-pose (model-name model-pose)
+  (roslisp:call-service "/gazebo/set_model_state" 'gazebo_msgs-srv:SetModelState
+                        :model_name model-name
+                        :pose model-pose
+                        :reference_frame "map"))
+
 (defun cancel-function ()
-  )
+  (detach-model "pr2" (mot-man:eef-link-name :left) "pizza_plate" "pizza_plate")
+  (detach-model "pr2" (mot-man:eef-link-name :right)  "pizza_plate" "pizza_plate")
+  (detach-model "pr2" (mot-man:eef-link-name :left) "pizza_cutter" "pizza_cutter")
+  (detach-model "pr2" (mot-man:eef-link-name :right)  "pizza_cutter" "pizza_cutter")
+  (detach-model "pr2" (mot-man:eef-link-name :left) "bread" "bread")
+  (detach-model "pr2" (mot-man:eef-link-name :right) "bread" "bread")
+  (detach-model "pr2" (mot-man:eef-link-name :left)  "knife" "knife")
+  (detach-model "pr2" (mot-man:eef-link-name :right)  "knife" "knife")
+  (set-gazebo-object-pose "pizza-plate" *initial-pose-pizza*)
+  (set-gazebo-object-pose "pizza-cutter" *initial-pose-pizza-cutter*)
+  (set-gazebo-object-pose "bread" *initial-pose-bread*)
+  (set-gazebo-object-pose "knife" *initial-pose-knife*)
+  (attach-model "IAI_kitchen" "room_link" "pizza_plate" "pizza_plate")
+  (attach-model "IAI_kitchen" "room_link" "pizza_cutter" "pizza_cutter")
+  (attach-model "IAI_kitchen" "room_link" "bread" "bread")
+  (attach-model "IAI_kitchen" "room_link" "knife" "knife")
+  (move-arms-up))
 
 (defparameter *pracsimserver-plan-matchings*
               (list (cons "Cutting" (list #'perform-cut #'perform-cut-get-args))
@@ -995,6 +1034,10 @@
 (defun start-scenario ()
   (roslisp-utilities:startup-ros)
   (semantic-map-collision-environment:publish-semantic-map-collision-objects)
+  (setf *initial-pose-pizza* (get-init-pose "pizza_plate" cram-moveit::*transformer*))
+  (setf *initial-pose-pizza-cutter* (get-init-pose "pizza_cutter" cram-moveit::*transformer*))
+  (setf *initial-pose-bread* (get-init-pose "bread" cram-moveit::*transformer*))
+  (setf *initial-pose-knife* (get-init-pose "knife" cram-moveit::*transformer*))
   (prac2cram:prac2cram-server *pracsimserver-plan-matchings* #'cancel-function)
   ;;(perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil)
   (let* ((a 1) (b 1) (s 1))
