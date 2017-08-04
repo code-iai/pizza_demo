@@ -1003,9 +1003,10 @@
 
 (defun set-gazebo-object-pose (model-name model-pose)
   (roslisp:call-service "/gazebo/set_model_state" 'gazebo_msgs-srv:SetModelState
-                        :model_name model-name
-                        :pose model-pose
-                        :reference_frame "map"))
+                        :model_state (roslisp:make-message "gazebo_msgs/ModelState"
+                                                           :model_name model-name
+                                                           :pose model-pose
+                                                           :reference_frame "map")))
 
 (defun cancel-function ()
   (detach-model "pr2" (mot-man:eef-link-name :left) "pizza_plate" "pizza_plate")
