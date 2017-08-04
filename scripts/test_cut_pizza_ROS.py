@@ -41,7 +41,7 @@ def getStringList(strings_ROS):
 
 
 cut_a_slice = {'action_cores': [{'action_core_name': 'Cutting', 'action_roles': [{'role_name': 'utensil', 'role_value': 'knife'}, {'role_name': 'unit', 'role_value': 'slice'}, {'role_name': 'obj_to_be_cut', 'role_value': 'bread'}, {'role_name': 'action_verb', 'role_value': 'cut'}, {'role_name': 'amount', 'role_value': '4'}]}]}
-tasks_ROS = getROSTasks(cut_a_slice)
+tasks_ROS = getROSTasks([cut_a_slice])
 
 rospy.wait_for_service('prac2cram', timeout=5) # in seconds
 
