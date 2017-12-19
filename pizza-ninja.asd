@@ -9,7 +9,7 @@
   :depends-on (:cl-transforms-stamped
                :alexandria
                :cl-tf
-               :meshproc_msgs-srv
+               ;;:meshproc_msgs-srv
                :attache_msgs-srv
                :gazebo_msgs-srv
                :visualization_msgs-msg
@@ -20,7 +20,7 @@
                :roslisp-utilities
                :roslisp
                :ros-load-manifest
-               :cram-moveit-manager
+               ;;:cram-moveit-manager
                :prac2cram
                ;;:pr2-manipulation-process-module
                ;;
@@ -29,7 +29,7 @@
                actionlib
                roslisp-utilities
                cram-prolog
-               cram-plan-failures
+               cram-common-failures
                cram-plan-occasions-events
                cram-occasions-events
                cram-pr2-description
@@ -42,10 +42,13 @@
                semantic-map-collision-environment
                pr2_mechanism_msgs-srv
                cram-motion-manager
-               cram-moveit
-               cram-beliefstate
+               ;;cram-moveit
+               cram-executive
+               cram-pr2-pick-place-plans
+               cram-pr2-process-modules
+               ;;cram-beliefstate
                ;;
-               :pr2-navigation-process-module
+               ;;:pr2-navigation-process-module
                :pr2-reachability-costmap)
   :components
   ((:module "src"

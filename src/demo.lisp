@@ -86,11 +86,156 @@
                                                                   (cl-transforms:make-identity-transform)))
 
 
-(defparameter *initial-pose-pizza* nil)
-(defparameter *initial-pose-bread* nil)
-(defparameter *initial-pose-knife* nil)
-(defparameter *initial-pose-pizza-cutter* nil)
+(defparameter *fixed-frame* "base_link")
 
+(defparameter *initial-pose-pizza* (cl-tf:make-pose-stamped
+                                     *fixed-frame* 0
+                                     (cl-tf:make-3d-vector -0.85 1.85 0.9)
+                                     (cl-tf:euler->quaternion :az pi)))
+(defparameter *initial-pose-bread* (cl-tf:make-pose-stamped
+                                     *fixed-frame* 0
+                                     (cl-tf:make-3d-vector -0.85 1.25 0.9)
+                                     (cl-tf:euler->quaternion :az pi)))
+(defparameter *initial-pose-knife* (cl-tf:make-pose-stamped
+                                     *fixed-frame* 0
+                                     (cl-tf:make-3d-vector -0.85 1.45 0.9)
+                                     (cl-tf:euler->quaternion :az pi)))
+(defparameter *initial-pose-pizza-cutter* (cl-tf:make-pose-stamped
+                                            *fixed-frame* 0
+                                            (cl-tf:make-3d-vector -0.95 1.6 0.9)
+                                            (cl-tf:euler->quaternion :ax pi :ay (- (/ pi 2)))))
+
+
+(defparameter *bread-pose* (cpl-impl:make-fluent
+                             :name :bread-pose
+                             :value *initial-pose-bread*))
+
+(defparameter *knife-pose* (cpl-impl:make-fluent
+                             :name :knife-pose
+                             :value *initial-pose-knife*))
+
+(defparameter *pizza-plate* (cpl-impl:make-fluent
+                              :name :pizza-plate-pose
+                              :value *initial-pose-pizza*))
+
+(defparameter *pizza-cutter* (cpl-impl:make-fluent
+                               :name :pizza-plate-pose
+                               :value *initial-pose-pizza-cutter*))
+
+(defparameter *marker-object-fluents* `(("bread" . ,*bread-pose*)
+                                        ("knife" . ,*knife-pose*)
+                                        ("pizza_plate" . ,*pizza-plate*)
+                                        ("pizza_cutter" . ,*pizza-cutter*)))
+
+;;(defparameter *marker-object-colors* `(("bread" . ,(roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r r :g g :b b))))
+
+(defparameter *marker-object-mesh-paths* `(("bread" . "package://pizza_demo/models/bread/meshes/bread.dae")
+                                           ("knife" . "package://pizza_demo/models/knife/meshes/knife.dae")
+                                           ("pizza_cutter" . "package://pizza_demo/models/pizza_cutter/meshes/pizza_cutter.dae")
+                                           ("pizza_plate" . "package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.dae")))
+
+(defun get-assoc-val (key alist)
+  (cdr (assoc key alist :test #'equal)))
+
+;;(defun get-mrk-object-color (obj-name)
+;;  (get-assoc-val obj-name *marker-object-colors*))
+
+(defun get-mrk-object-mesh-path (obj-name)
+  (get-assoc-val obj-name *marker-object-mesh-paths*))
+
+(defun get-mrk-obj (mrk-object-name)
+  (get-assoc-val mrk-object-name *marker-object-fluents*))
+
+(defun get-linked-frame (mrk-object-name)
+  (let* ((mrk-obj (get-mrk-obj mrk-object-name)))
+    (cl-tf:frame-id (cpl-impl:value mrk-obj))))
+
+(defun get-transform-to-marker-object (transformer base-frame object-name &key timeout)
+  (let* ((mrk-obj (get-mrk-obj object-name))
+         (obj-base-frame (get-linked-frame object-name))
+         (obj-pose (cpl-impl:value mrk-obj))
+         (obj-transform (cl-tf:make-transform (cl-tf:origin obj-pose)
+                                              (cl-tf:orientation obj-pose)))
+         (b2l-transform (cl-tf:lookup-transform transformer base-frame obj-base-frame :timeout timeout))
+         (ob-transform (cl-tf:transform* b2l-transform obj-transform)))
+    (cl-tf:make-transform-stamped base-frame object-name 0 (cl-tf:translation ob-transform) (cl-tf:rotation ob-transform))))
+
+
+(defun publish-marker-object (obj-rec)
+  (let* ((obj-name (car obj-rec))
+         (mrk-obj (cdr obj-rec))
+         (obj-pose (cpl-impl:value mrk-obj))
+         (base-frame (cl-tf:frame-id obj-pose))
+         (obj-t (cl-tf:origin obj-pose))
+         (obj-r (cl-tf:orientation obj-pose))
+         (x (cl-tf:x obj-t))
+         (y (cl-tf:y obj-t))
+         (z (cl-tf:z obj-t))
+         (qx (cl-tf:x obj-r))
+         (qy (cl-tf:y obj-r))
+         (qz (cl-tf:z obj-r))
+         (qw (cl-tf:w obj-r))
+         (pose-msg (roslisp:make-message "geometry_msgs/Pose"
+                     :position (roslisp:make-message "geometry_msgs/Point" :x x :y y :z z)
+                     :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x qx :y qy :z qz :w qw)))
+         ;;(color-msg (get-mrk-object-color obj-name))
+         (mesh-path (get-mrk-object-mesh-path obj-name))
+         (mrk-msg (roslisp:make-message "visualization_msgs/Marker"
+                                        :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
+                                        :id 0
+                                        :ns obj-name
+                                        :action 0
+                                        :type 10
+                                        :frame_locked T
+                                        :scale (roslisp:make-message "geometry_msgs/Vector3" :x 1 :y 1 :z 1)
+                                        :pose pose-msg
+                                        ;;:color color-msg
+                                        :mesh_resource mesh-path
+                                        )))
+    (roslisp:publish (ensure-mrk-publisher)
+                     mrk-msg)))
+
+
+(defun set-marker-object-pose (name pose)
+  (let* ((mrk-obj (get-mrk-obj name)))
+    (setf (cpl-impl:value mrk-obj)
+          pose)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun own-eef-link-name (arm)
+  (if (equal arm :left)
+    "l_gripper_l_finger_tip_link"
+    "r_gripper_r_finger_tip_link"))
+
+(defparameter *initial-pose-robot* (cl-tf:make-pose-stamped
+                                     *fixed-frame* 0
+                                     (cl-tf:make-3d-vector 0 0 0)
+                                     (cl-tf:euler->quaternion)))
+(defparameter *robot-base-fluent* (cpl-impl:make-fluent
+                                         :name :robot-base
+                                         :value (cl-tf:pose->transform *initial-pose-robot*)))
+
+(defun fake-move-robot (pose)
+  (let* ((transform (cl-tf:pose->transform pose))
+         (base-transform (cpl-impl:value *robot-base-fluent*))
+         (shift (cl-tf:transform* base-transform
+                                  (cl-tf:transform-inv transform))))
+    (mapcar (lambda (obj-rec)
+              (let* ((mrk-obj (cdr obj-rec))
+                     (pose (cpl-impl:value mrk-obj))
+                     (transform (cl-tf:pose->transform pose))
+                     (frame (cl-tf:frame-id pose)))
+                (when (equal frame *fixed-frame*)
+                  (let* ((shifted (cl-tf:transform* shift transform)))
+                    (setf (cpl-impl:value mrk-obj)
+                          (cl-tf:make-pose-stamped
+                            *fixed-frame* 0
+                            (cl-tf:translation shifted)
+                            (cl-tf:rotation shifted)))))))
+            *marker-object-fluents*)
+    (setf (cpl-impl:value *robot-base-fluent*)
+                          transform)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -105,32 +250,40 @@
 ;; Basic move functions
 
 (defun move-arm-poses (arm poses)
-  (cpl-impl:with-failure-handling
-    ((cram-plan-failures:manipulation-pose-unreachable (f)
-       (declare (ignore f))
-       ;; So far, when encountered this meant the simulation was not recoverable
-       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
-       (setf (cpl:value prac2cram:plan-error) T)
-       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
-       (cpl-impl:retry)))
-    (mot-man:execute-arm-action (mot-man:make-goal-specification
-                                  :moveit-goal-specification
-                                  :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses))))))
+  (if (eql arm :left)
+    (pr2-pp-plans::move-arms-in-sequence poses nil)
+    (pr2-pp-plans::move-arms-in-sequence nil poses)))
+
+;;(defun move-arm-poses (arm poses)
+;;  (cpl-impl:with-failure-handling
+;;    ((cram-common-failures:manipulation-pose-unreachable (f)
+;;       (declare (ignore f))
+;;       ;; So far, when encountered this meant the simulation was not recoverable
+;;       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
+;;       (setf (cpl:value prac2cram:plan-error) T)
+;;       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
+;;       (cpl-impl:retry)))
+;;    (mot-man:execute-arm-action (mot-man:make-goal-specification
+;;                                  :moveit-goal-specification
+;;                                  :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses))))))
 
 (defun move-arms-up ()
-  (cpl-impl:with-failure-handling
-    ((cram-plan-failures:manipulation-pose-unreachable (f)
-       (declare (ignore f))
-       ;; So far, when encountered this meant the simulation was not recoverable
-       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
-       (setf (cpl:value prac2cram:plan-error) T)
-       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
-       (cpl-impl:retry)))
-    (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
-                                  :moveit-goal-specification
-                                  :keys '((:raise-elbow (:left :right)))
-                                  :arm-pose-goals (list `(:left ,*left-arm-up*)
-                                                        `(:right ,*right-arm-up*))))))
+  (pr2-pp-plans::park-arms))
+
+;;(defun move-arms-up ()
+;;  (cpl-impl:with-failure-handling
+;;    ((cram-common-failures:manipulation-pose-unreachable (f)
+;;       (declare (ignore f))
+;;       ;; So far, when encountered this meant the simulation was not recoverable
+;;       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
+;;       (setf (cpl:value prac2cram:plan-error) T)
+;;       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
+;;       (cpl-impl:retry)))
+;;    (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
+;;                                  :moveit-goal-specification
+;;                                  :keys '((:raise-elbow (:left :right)))
+;;                                  :arm-pose-goals (list `(:left ,*left-arm-up*)
+;;                                                        `(:right ,*right-arm-up*))))))
 
 ;; Load capmap
 
@@ -187,11 +340,11 @@
   (declare (ignore tf-transformer))
   (cond
     ((equal object-name "pizza_plate")
-      (cl-transforms-stamped:make-pose-stamped "map" 0
+      (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0
                                                (cl-transforms:make-3d-vector -0.25 1.85 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))
     ((equal object-name "bread")
-      (cl-transforms-stamped:make-pose-stamped "map" 0
+      (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0
                                                (cl-transforms:make-3d-vector -0.25 1.25 0)
                                                (cl-transforms:make-quaternion 0 0 1 0)))))
 
@@ -200,9 +353,9 @@
 (defun get-skeleton-to-tool (tool-name)
   (cond
     ((equal tool-name "pizza_cutter")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0.15) (cl-transforms:make-quaternion 0 0 0 1)))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.195) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
 
 ;;    Tool frame placement in arm
 
@@ -273,8 +426,8 @@
   (cond
     ((equal tool-name "pizza_cutter")
       (if (equal arm :left)
-        (cl-transforms:make-3d-vector 0 0 0.22)
-        (cl-transforms:make-3d-vector 0 0 0.12)))
+        (cl-transforms:make-3d-vector 0 0 0.1)
+        (cl-transforms:make-3d-vector 0 0 0)))
     ((equal tool-name "knife")
       (if (equal arm :left)
         (cl-transforms:make-3d-vector 0.05 0 0)
@@ -294,7 +447,7 @@
          (tool-point (cl-transforms:transform* tool-point grab-transform))
          (grab-translation (cl-transforms:translation tool-point))
          (grab-rotation (cl-transforms:rotation tool-point))
-         (grab (cl-transforms-stamped:make-pose-stamped "map" 0 grab-translation grab-rotation))
+         (grab (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 grab-translation grab-rotation))
          (approach-v (cond
                        ((equal tool-name "pizza_cutter")
                          (if (equal arm-grab-type :pickup)
@@ -321,42 +474,42 @@
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.275 0 0.22) (cl-transforms:euler->quaternion :az pi)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.275 0 0.1) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.275 0 0.22) (cl-transforms:euler->quaternion)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.275 0 0.1) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
-                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.29) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                     ((equal arm :right)
                       (cond
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.275 0 0.12) (cl-transforms:euler->quaternion :az pi)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.275 0 0) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.275 0 0.12) (cl-transforms:euler->quaternion)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.275 0 0) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
-                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.29) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
+                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (grab (cond
                  ((equal arm :left)
                    (cond
                      ((equal tool-name "pizza_cutter")
                        (cond
                          ((equal arm-grab-type :pickup)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.22) (cl-transforms:euler->quaternion :az pi)))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.1) (cl-transforms:euler->quaternion :az pi)))
                          ((equal arm-grab-type :use)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.22) (cl-transforms:euler->quaternion)))))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.1) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
-                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.22) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                  ((equal arm :right)
                    (cond
                      ((equal tool-name "pizza_cutter")
                        (cond
                          ((equal arm-grab-type :pickup)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0.12) (cl-transforms:euler->quaternion :az pi)))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.2 0 0) (cl-transforms:euler->quaternion :az pi)))
                          ((equal arm-grab-type :use)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0.12) (cl-transforms:euler->quaternion)))))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
-                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.22) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
+                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (pregrab (cl-transforms:transform* tool-loc pregrab))
          (grab (cl-transforms:transform* tool-loc grab))
          (pregrab (cl-transforms-stamped:make-pose-stamped (cl-transforms-stamped:frame-id tool-loc) 0
@@ -386,7 +539,7 @@
 
 (defun reset-skeleton-markers ()
   (roslisp:publish (ensure-mrk-publisher) (roslisp:make-message "visualization_msgs/Marker"
-                                                                :header (roslisp:make-message "std_msgs/Header" :frame_id "map" :stamp 0)
+                                                                :header (roslisp:make-message "std_msgs/Header" :frame_id *fixed-frame* :stamp 0)
                                                                 :id 0
                                                                 :action 3
                                                                 :ns "cut-skeleton")))
@@ -394,13 +547,13 @@
 (defun update-markers (cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
   (declare (ignore tool-name) (ignore slices-marker))
   (place-skeleton-markers cut-skeleton-wrapper
-                          "map"
-                          :linked-frame object-name
-                          :base-to-link-transform (cl-tf:lookup-transform tf-transformer "map" object-name)))
+                          *fixed-frame*
+                          :linked-frame (get-linked-frame object-name)
+                          :base-to-link-transform (cl-tf:lookup-transform tf-transformer *fixed-frame* (get-linked-frame object-name) :timeout 5.0)))
 
 (defun place-object-group-markers (mrk-namespace object-name slices-marker &key location (alpha 1.0))
   (let* ((base-frame (if location
-                       "map"
+                       *fixed-frame*
                        object-name))
          (frame-locked (if location 0 1))
          (obj-pose-msg (if location
@@ -449,26 +602,30 @@
 ;; Handle object grab/release events
 
 (defun attach-model (robot-model-name robot-link-name object-model-name object-link-name)
-  (roslisp:call-service "/gazebo/attach" 'attache_msgs-srv:Attachment
-                        :model1 robot-model-name
-                        :link1 robot-link-name
-                        :model2 object-model-name
-                        :link2 object-link-name))
+  (declare (ignore robot-model-name) (ignore object-model-name))
+  (let* ((obj-transform (get-transform-to-marker-object cram-tf:*transformer* *fixed-frame* object-link-name :timeout 5.0))
+         (link-transform (cl-tf:lookup-transform cram-tf:*transformer* *fixed-frame* robot-link-name :timeout 5.0))
+         (new-transform (cl-tf:transform* (cl-tf:transform-inv link-transform) obj-transform))
+         (mrk-obj (get-mrk-obj object-link-name)))
+    (setf (cpl-impl:value mrk-obj)
+          (cl-tf:make-pose-stamped
+            robot-link-name
+            0
+            (cl-tf:translation new-transform)
+            (cl-tf:rotation new-transform)))))
 
 (defun detach-model (robot-model-name robot-link-name object-model-name object-link-name)
-  (roslisp:call-service "/gazebo/detach" 'attache_msgs-srv:Attachment
-                        :model1 robot-model-name
-                        :link1 robot-link-name
-                        :model2 object-model-name
-                        :link2 object-link-name))
+  (declare (ignore robot-model-name) (ignore robot-link-name))
+  (attach-model *fixed-frame* *fixed-frame* object-model-name object-link-name))
 
 (defun on-grab-object (object-name arm)
-  (detach-model "IAI_kitchen" "room_link" object-name object-name)
-  (attach-model "pr2" (mot-man:eef-link-name arm) object-name object-name))
+  ;(detach-model "IAI_kitchen" "room_link" object-name object-name)
+  (attach-model "pr2" (own-eef-link-name arm) object-name object-name))
 
 (defun on-release-object (object-name arm)
-  (detach-model "pr2" (mot-man:eef-link-name arm) object-name object-name)
-  (attach-model "IAI_kitchen" "room_link" object-name object-name))
+  (detach-model "pr2" (own-eef-link-name arm) object-name object-name)
+  ;(attach-model "IAI_kitchen" "room_link" object-name object-name)
+  )
 
 ;; Compute grasp/release poses for repositioning maneuvers
 
@@ -589,7 +746,7 @@
     (and (> translation-threshold translation-distance) (> angle-threshold angle))))
 
 (defun reposition-object (object-name object-loc arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer &optional (init-sup-man-count 0))
-  (let* ((robot-loc (cl-tf:lookup-transform tf-transformer "map" "torso_lift_link"))
+  (let* ((robot-loc (cl-tf:lookup-transform tf-transformer *fixed-frame* "torso_lift_link" :timeout 5.0))
          (grab-pose (get-object-reposition-grab object-name object-loc robot-loc suggested-transform maneuver-arm aux-arm))
          (release-pose (get-object-reposition-release object-name object-loc robot-loc suggested-transform maneuver-arm aux-arm))
          (pregrab-pose (get-prepose grab-pose :z :above))
@@ -602,7 +759,7 @@
       (on-release-object object-name aux-arm)
       (move-arm-poses aux-arm prerelease-pose)
       (setf init-sup-man-count
-            (reposition-object object-name (cl-tf:lookup-transform tf-transformer "map" object-name)
+            (reposition-object object-name (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0)
                                arm-capmap-loc suggested-transform maneuver-arm aux-arm tf-transformer (+ init-sup-man-count 1))))
     init-sup-man-count))
 
@@ -610,38 +767,49 @@
 ;; Bring PR2 to a nice location for the task
 
 (defun setup-pr2 (desired-base-pose)
-  (let* ((torso-action (actionlib:make-action-client "/torso_controller/position_joint_action"
+  (let* ((?desired-base-pose desired-base-pose)
+         (torso-action (actionlib:make-action-client "/torso_controller/position_joint_action"
                                                      "pr2_controllers_msgs/SingleJointPositionAction")))
     (cpl-impl:par
       (cpl-impl:with-failure-handling
         ((sb-sys:deadline-timeout (f)
            (declare (ignore f))
            (cpl-impl:retry)))
-        (actionlib:wait-for-server torso-action)
-        (actionlib:send-goal-and-wait torso-action
-                                      (actionlib:make-action-goal torso-action position 0.3)
-                                      :result-timeout 30.0
-                                      :exec-timeout 30.0))
+        ;;(format t "Wait4Torso~%")
+        ;;(actionlib:wait-for-server torso-action)
+        (format t "TorsoUp~%")
+        ;;(actionlib:send-goal-and-wait torso-action
+        ;;                              (actionlib:make-action-goal torso-action position 0.3)
+        ;;                              :result-timeout 30.0
+        ;;                              :exec-timeout 30.0)
+        )
       (progn
+        (format t "ArmsUp~%")
         (move-arms-up)
-        (actionlib-lisp:send-goal-and-wait pr2-nav-pm::*navp-client*
-                                           (pr2-nav-pm::make-action-goal desired-base-pose)
-                                           100 100)))))
+        (format t "Going~%")
+        (fake-move-robot ?desired-base-pose)
+        ;;(exe:perform (desig:a motion
+        ;;                      (type going)
+        ;;                      (target (desig:a location (pose ?desired-base-pose)))))
+        ;;(actionlib-lisp:send-goal-and-wait pr2-nav-pm::*navp-client*
+        ;;                                   (pr2-nav-pm::make-action-goal desired-base-pose)
+        ;;                                   100 100)
+        ))))
 
 ;; Bigger plans
 
 (defun handover-tool (tool-name object-name first-arm second-arm tf-transformer first-arm-has-tool put-down)
-  (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "torso_lift_link" tool-name))
+  (let* ((tool-loc (get-transform-to-marker-object tf-transformer "torso_lift_link" tool-name :timeout 5.0))
          (first-arm-grab-locs (get-arm-grab-locs first-arm tool-name tool-loc :pickup))
          (first-arm-pregrab (first first-arm-grab-locs))
          (first-arm-grab (second first-arm-grab-locs))
          (robot-name "pr2")
-         (first-arm-eef-link (mot-man:eef-link-name first-arm))
-         (second-arm-eef-link (mot-man:eef-link-name second-arm)))
+         (first-arm-eef-link (own-eef-link-name first-arm))
+         (second-arm-eef-link (own-eef-link-name second-arm)))
 ;; Grab the tool with the first arm, unless it's already grabbed
     (unless first-arm-has-tool
       (move-arm-poses first-arm (list first-arm-pregrab first-arm-grab))
-      (detach-model "IAI_kitchen" "room_link" tool-name tool-name)
+      ;(detach-model "IAI_kitchen" "room_link" tool-name tool-name)
       (attach-model robot-name first-arm-eef-link tool-name tool-name)
       (move-arm-poses first-arm first-arm-pregrab))
 ;; Depending on whether we need to change which arm has the tool, go to a handover or park pose
@@ -650,7 +818,7 @@
       (move-arm-poses first-arm (list (get-handover-src-pose first-arm))))
 ;; If needed, do the handover here
     (when (not (equal first-arm second-arm))
-      (let* ((tool-loc (cl-tf:lookup-transform tf-transformer "torso_lift_link" tool-name))
+      (let* ((tool-loc (get-transform-to-marker-object tf-transformer "torso_lift_link" tool-name :timeout 5.0))
              (arm-grab-type (if put-down
                               :pickup ;; not a typo :P
                               :use))
@@ -661,19 +829,19 @@
         (move-arm-poses second-arm (list second-arm-pregrab second-arm-grab))
 ;; Switch which arm carries the tool
         (attach-model robot-name second-arm-eef-link tool-name tool-name)
-        (detach-model robot-name first-arm-eef-link tool-name tool-name)
+        ;(detach-model robot-name first-arm-eef-link tool-name tool-name)
 ;; Park the first arm, in case of the handover
         (move-arm-poses first-arm (list (get-park-pose first-arm)))))
 ;; Depending on whether we need to do a put-down, either do the put-down, or just park the arm
     (if put-down
-      (let* ((object-loc (cl-tf:lookup-transform tf-transformer "torso_lift_link" object-name))
+      (let* ((object-loc (get-transform-to-marker-object tf-transformer "torso_lift_link" object-name :timeout 5.0))
              (tool-loc (get-tool-place-locs second-arm object-name tool-name object-loc))
              (place-locs (get-arm-grab-locs second-arm tool-name tool-loc :pickup))
              (preplace-pose (first place-locs))
              (place-pose (second place-locs)))
         (move-arm-poses second-arm (list preplace-pose place-pose))
-        (attach-model "IAI_kitchen" "room_link" tool-name tool-name)
-        (detach-model robot-name second-arm-eef-link tool-name tool-name)
+        (attach-model *fixed-frame* *fixed-frame* tool-name tool-name)
+        ;(detach-model robot-name second-arm-eef-link tool-name tool-name)
         (move-arm-poses second-arm (list (get-park-pose second-arm))))
       (move-arm-poses second-arm (list (get-park-pose second-arm))))))
 
@@ -700,15 +868,15 @@
 ;; Only do something when there's something actually in the cut-skeleton
   (when (cut-skeleton cut-skeleton-wrapper)
 ;; Update the cut skeleton's transforms
-    (let* ((object-loc (cl-tf:lookup-transform tf-transformer "map" object-name))
+    (let* ((object-loc (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0))
            (skeleton-to-tool (get-skeleton-to-tool tool-name)))
       (setf (plan-to-environment-transform cut-skeleton-wrapper) object-loc)
       (setf (skeleton-to-tool-transform cut-skeleton-wrapper) skeleton-to-tool))
 ;; Update markers
     (update-markers cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
 ;; Do auxiliary maneuvers to assist cutting
-    (let* ((arm-capmap-loc (cl-tf:lookup-transform tf-transformer "map" "torso_lift_link"))
-           (object-loc (cl-tf:lookup-transform tf-transformer "map" object-name))
+    (let* ((arm-capmap-loc (cl-tf:lookup-transform tf-transformer *fixed-frame* "torso_lift_link" :timeout 5.0))
+           (object-loc (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0))
            (pose-suggestions (suggest-placement-transform cut-skeleton-wrapper maneuver-arm arm-capmap-loc :reachability-map arm-capmap))
            (suggested-transform (get-valid-pose-suggestion pose-suggestions))
            (suggested-transform-viz (cl-transforms:make-transform (cl-transforms:v+ (cl-transforms:translation suggested-transform)
@@ -716,24 +884,24 @@
                                                                   (cl-transforms:rotation suggested-transform))))
       (place-object-group-markers "pose-suggestion" object-name slices-marker :location suggested-transform-viz :alpha 0.35)
       (roslisp:wait-duration 1)
-      (place-reachmap-markers pose-suggestions "map" object-loc)
+      (place-reachmap-markers pose-suggestions *fixed-frame* object-loc)
       (setf init-sup-man-count
             (+ (reposition-object object-name object-loc arm-capmap-loc
                                   suggested-transform maneuver-arm aux-arm tf-transformer)
                init-sup-man-count))
       (setf (plan-to-environment-transform cut-skeleton-wrapper)
-            (cl-tf:lookup-transform tf-transformer "map" object-name))
+            (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0))
       (move-arm-poses aux-arm (get-park-pose aux-arm)))
 ;; Follow the skeleton segment: first, prepare the poses to send for the arm
     (let* ((segment (get-current-segment cut-skeleton-wrapper))
            (seg-prestart (segment-prestart segment))
-           (seg-prestart (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-prestart) (cl-transforms:rotation seg-prestart)))
+           (seg-prestart (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 (cl-transforms:translation seg-prestart) (cl-transforms:rotation seg-prestart)))
            (seg-start (segment-start segment))
-           (seg-start (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-start) (cl-transforms:rotation seg-start)))
+           (seg-start (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 (cl-transforms:translation seg-start) (cl-transforms:rotation seg-start)))
            (seg-end (segment-end segment))
-           (seg-end (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-end) (cl-transforms:rotation seg-end)))
+           (seg-end (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 (cl-transforms:translation seg-end) (cl-transforms:rotation seg-end)))
            (seg-postend (segment-postend segment))
-           (seg-postend (cl-transforms-stamped:make-pose-stamped "map" 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend)))
+           (seg-postend (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend)))
            (seg-waypoints (get-seg-waypoints seg-start seg-end 0.03)))
 ;; Follow the current skeleton segment; do it a few times, for style
       (move-arm-poses maneuver-arm 
@@ -751,17 +919,18 @@
   init-sup-man-count)
 
 (cpl-impl:def-cram-function perform-cut (object-name tool-name cut-skeleton-wrapper amount slices-marker)
-  (cram-beliefstate:enable-logging t)
-  (cram-beliefstate::start-new-experiment)
-  (cram-beliefstate:set-metadata :robot "PR2" :creator "IAI"
-                                 :experiment "Cut with assistive maneuvers"
-                                 :description (format nil "Perform ~a cuts (so as to get ~a slices) on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) amount object-name tool-name))
-  (cram-beliefstate::set-experiment-meta-data "performedInMap" "http://knowrob.org/kb/IAI-kitchen.owl#IAIKitchenMap_PM580j" :type :resource :ignore-namespace t)
-  (let* ((log-node-id (cram-beliefstate:start-node "SLICING" nil))
-         (tf-transformer cram-moveit::*transformer*)
+  ;;(cram-beliefstate:enable-logging t)
+  ;;(cram-beliefstate::start-new-experiment)
+  ;;(cram-beliefstate:set-metadata :robot "PR2" :creator "IAI"
+  ;;                               :experiment "Cut with assistive maneuvers"
+  ;;                               :description (format nil "Perform ~a cuts (so as to get ~a slices) on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) amount object-name tool-name))
+  ;;(cram-beliefstate::set-experiment-meta-data "performedInMap" "http://knowrob.org/kb/IAI-kitchen.owl#IAIKitchenMap_PM580j" :type :resource :ignore-namespace t)
+  (let* ((log-node-id 0;;(cram-beliefstate:start-node "SLICING" nil)
+         )
+         (tf-transformer cram-tf::*transformer*)
          (cut-skeleton-wrapper (make-instance 'cut-skeleton-wrapper
                                               :skeleton-to-tool-transform (get-skeleton-to-tool tool-name)
-                                              :plan-to-environment-transform (cl-tf:lookup-transform tf-transformer "map" object-name)
+                                              :plan-to-environment-transform (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0)
                                               :cut-skeleton (mapcar (lambda (seg)
                                                                       (make-instance 'skeleton-segment
                                                                                      :segment-start (segment-start seg)
@@ -770,29 +939,36 @@
                                                                                      :segment-postend (segment-postend seg)))
                                                                     (cut-skeleton cut-skeleton-wrapper))))
          (desired-base-pose (get-desired-base-pose object-name tf-transformer)))
-    (cram-beliefstate::annotate-resource "toolUsed" (get-object-semmap-name tool-name) "knowrob")
-    (cram-beliefstate::annotate-resource "objectActedOn" (get-object-semmap-name object-name) "knowrob")
-    (cram-beliefstate::annotate-resource "numberOfSlices" amount "knowrob")
-    (cram-beliefstate::annotate-resource "numberOfCuts" (length (cut-skeleton cut-skeleton-wrapper)))
+    ;;(cram-beliefstate::annotate-resource "toolUsed" (get-object-semmap-name tool-name) "knowrob")
+    ;;(cram-beliefstate::annotate-resource "objectActedOn" (get-object-semmap-name object-name) "knowrob")
+    ;;(cram-beliefstate::annotate-resource "numberOfSlices" amount "knowrob")
+    ;;(cram-beliefstate::annotate-resource "numberOfCuts" (length (cut-skeleton cut-skeleton-wrapper)))
+    (format t "Placing markers ... ~%")
     (place-object-group-markers "object-markers" object-name slices-marker)
+    (format t "Bringing PR2 to a first task waypoint~%")
     (setup-pr2 desired-base-pose)
     (let* ((tool-grabbing-arm (get-tool-grabbing-arm object-name tool-name tf-transformer))
            (maneuver-arm (get-maneuver-arm object-name tool-name tf-transformer))
            (arm-capmap (get-arm-capmap maneuver-arm))
            (supportive-maneuvers 0)
            (aux-arm (get-aux-arm object-name tool-name tf-transformer)))
+      (format t "Doing a handover maneuver to retrieve tool from storage.~%")
       (handover-tool tool-name object-name tool-grabbing-arm maneuver-arm tf-transformer nil nil)
+      (format t "Performing a cut skeleton.~%")
       (setf supportive-maneuvers
             (perform-cut-skeleton cut-skeleton-wrapper tool-name object-name maneuver-arm aux-arm tf-transformer arm-capmap slices-marker))
-      (cram-beliefstate::annotate-resource "numberOfSupportiveManeuvers" supportive-maneuvers "knowrob")
+      ;;(cram-beliefstate::annotate-resource "numberOfSupportiveManeuvers" supportive-maneuvers "knowrob")
+      (format t "Doing a handover maneuver to restore tool to storage.~%")
       (handover-tool tool-name object-name maneuver-arm tool-grabbing-arm tf-transformer t t)
-      (cram-beliefstate:stop-node log-node-id)))
+      ;;(cram-beliefstate:stop-node log-node-id)
+      ))
   (let* ((date-time (multiple-value-bind (second minute hour date month year) (get-decoded-time) (format nil "~d-~2,'0d-~2,'0d--~2,'0d:~2,'0d:~2,'0d" year month date hour minute second)))
          (file-name (format nil "perform-cut-~a" date-time))
          (dot-name (format nil "~a.dot" file-name))
          (owl-name (format nil "~a.owl" file-name)))
-    (cram-beliefstate:extract-dot-file dot-name)
-    (cram-beliefstate:extract-owl-file owl-name)))
+    ;;(cram-beliefstate:extract-dot-file dot-name)
+    ;;(cram-beliefstate:extract-owl-file owl-name)
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -849,9 +1025,9 @@
       (let* ((amount (if (< 1 amount)
                        amount
                        1))
-             (amount (if (< amount 7)
+             (amount (if (< amount 8)
                        amount
-                       7))
+                       8))
              (amount (floor amount)))
         amount))
     ((equal object-name "bread")
@@ -865,8 +1041,8 @@
         amount))))
 
 (defun get-pizza-cut-skeleton-wrapper (amount)
-  (let* ((transformer cram-moveit::*transformer*)
-         (pizza-loc (cl-tf:lookup-transform transformer "map" "pizza_plate"))
+  (let* ((transformer cram-tf::*transformer*)
+         (pizza-loc (get-transform-to-marker-object transformer *fixed-frame* "pizza_plate" :timeout 5.0))
          (robot-at-pizza-loc (get-desired-base-pose "pizza_plate" transformer))
          (amount (sanity-check amount "pizza_plate"))
          (need-cuts (< 1 amount))
@@ -989,7 +1165,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun get-init-pose (object-name tf-transformer)
-  (let* ((transform (cl-tf:lookup-transform tf-transformer "map" object-name)))
+  (let* ((transform (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0)))
     (roslisp:make-message "geometry_msgs/Pose"
                           :position (roslisp:make-message "geometry_msgs/Point"
                                                           :x (cl-tf:x (cl-tf:translation transform))
@@ -1006,49 +1182,68 @@
                         :model_state (roslisp:make-message "gazebo_msgs/ModelState"
                                                            :model_name model-name
                                                            :pose model-pose
-                                                           :reference_frame "map")))
+                                                           :reference_frame *fixed-frame*)))
 
 (defun cancel-function ()
-  (detach-model "pr2" (mot-man:eef-link-name :left) "pizza_plate" "pizza_plate")
-  (detach-model "pr2" (mot-man:eef-link-name :right)  "pizza_plate" "pizza_plate")
-  (detach-model "pr2" (mot-man:eef-link-name :left) "pizza_cutter" "pizza_cutter")
-  (detach-model "pr2" (mot-man:eef-link-name :right)  "pizza_cutter" "pizza_cutter")
-  (detach-model "pr2" (mot-man:eef-link-name :left) "bread" "bread")
-  (detach-model "pr2" (mot-man:eef-link-name :right) "bread" "bread")
-  (detach-model "pr2" (mot-man:eef-link-name :left)  "knife" "knife")
-  (detach-model "pr2" (mot-man:eef-link-name :right)  "knife" "knife")
-  (detach-model "IAI_kitchen" "room_link" "pizza_plate" "pizza_plate")
-  (detach-model "IAI_kitchen" "room_link" "pizza_cutter" "pizza_cutter")
-  (detach-model "IAI_kitchen" "room_link" "bread" "bread")
-  (detach-model "IAI_kitchen" "room_link" "knife" "knife")
-  (set-gazebo-object-pose "pizza_plate" *initial-pose-pizza*)
-  (set-gazebo-object-pose "pizza_cutter" *initial-pose-pizza-cutter*)
-  (set-gazebo-object-pose "bread" *initial-pose-bread*)
-  (set-gazebo-object-pose "knife" *initial-pose-knife*)
-  ;(attach-model "IAI_kitchen" "room_link" "pizza_plate" "pizza_plate")
-  ;(attach-model "IAI_kitchen" "room_link" "pizza_cutter" "pizza_cutter")
-  ;(attach-model "IAI_kitchen" "room_link" "bread" "bread")
-  ;(attach-model "IAI_kitchen" "room_link" "knife" "knife")
-  (move-arms-up))
+  (detach-model "pr2" (own-eef-link-name :left) "pizza_plate" "pizza_plate")
+  (detach-model "pr2" (own-eef-link-name :right)  "pizza_plate" "pizza_plate")
+  (detach-model "pr2" (own-eef-link-name :left) "pizza_cutter" "pizza_cutter")
+  (detach-model "pr2" (own-eef-link-name :right)  "pizza_cutter" "pizza_cutter")
+  (detach-model "pr2" (own-eef-link-name :left) "bread" "bread")
+  (detach-model "pr2" (own-eef-link-name :right) "bread" "bread")
+  (detach-model "pr2" (own-eef-link-name :left)  "knife" "knife")
+  (detach-model "pr2" (own-eef-link-name :right)  "knife" "knife")
+  (set-marker-object-pose "pizza_plate" *initial-pose-pizza*)
+  (set-marker-object-pose "pizza_cutter" *initial-pose-pizza-cutter*)
+  (set-marker-object-pose "bread" *initial-pose-bread*)
+  (set-marker-object-pose "knife" *initial-pose-knife*)
+  (cram-process-modules:with-process-modules-running (pr2-pms::pr2-arms-pm)
+    (move-arms-up)
+    (fake-move-robot *initial-pose-robot*)))
+
+(cpl-impl:def-cram-function perform-cut-pm (object-name tool-name cut-skeleton-wrapper amount slices-marker)
+  (cram-process-modules:with-process-modules-running (pr2-pms::pr2-arms-pm pr2-pms::pr2-grippers-pm pr2-pms::pr2-ptu-pm pr2-pms::pr2-base-pm)
+    ;;(maphash (lambda (k v) (format t "~a~%" k)) (cl-tf::transforms cram-tf:*transformer*))
+    (perform-cut object-name tool-name cut-skeleton-wrapper amount slices-marker)))
 
 (defparameter *pracsimserver-plan-matchings*
-              (list (cons "Cutting" (list #'perform-cut #'perform-cut-get-args))
+              (list (cons "Cutting" (list #'perform-cut-pm #'perform-cut-get-args))
                     (cons "Pouring" (list #'pouring-top-level #'pouring-get-args))
-                    (cons "Cut-Test" (list #'perform-cut #'cut-test-get-args))))
+                    (cons "Cut-Test" (list #'perform-cut-pm #'cut-test-get-args))))
 
 (defun start-scenario ()
+  (roslisp:ros-info (pizza-demo) "Starting up ...")
+  ;;(remhash 'cram-tf::init-tf roslisp-utilities::*ros-init-functions*)
+  (remhash 'cram-moveit::init-moveit-bridge roslisp-utilities::*ros-init-functions*)
+  (remhash 'semantic-map-collision-environment::init-semantic-map-collision-environment roslisp-utilities::*ros-init-functions*)
+  ;;(remhash 'cram-location-costmap::location-costmap-vis-init roslisp-utilities::*ros-init-functions*)
+  (maphash (lambda (k v) (format t "~a ~a~%" k v))
+           roslisp-utilities::*ros-init-functions*)
   (roslisp-utilities:startup-ros)
-  (semantic-map-collision-environment:publish-semantic-map-collision-objects)
-  (setf *initial-pose-pizza* (get-init-pose "pizza_plate" cram-moveit::*transformer*))
-  (setf *initial-pose-pizza-cutter* (get-init-pose "pizza_cutter" cram-moveit::*transformer*))
-  (setf *initial-pose-bread* (get-init-pose "bread" cram-moveit::*transformer*))
-  (setf *initial-pose-knife* (get-init-pose "knife" cram-moveit::*transformer*))
+  (setf cram-tf:*transformer* (make-instance 'cl-tf2:buffer-client))
+  ;;(format t "~a~%" (cl-tf::transforms cram-tf:*transformer*))
+  ;;(cpl-impl:sleep* 5)
+  ;;(format t "~a~%" (cl-tf::transforms cram-tf:*transformer*))
+  ;;(maphash (lambda (k v) (format t "~a~%" k)) (cl-tf::transforms cram-tf:*transformer*))
+  ;;(roslisp:start-ros-node "cram")
+  (roslisp:ros-info (pizza-demo) "Node startup complete")
+  ;;(semantic-map-collision-environment:publish-semantic-map-collision-objects)
+  (roslisp:ros-info (pizza-demo) "Semantic map collision environment published")
+  (roslisp:ros-info (pizza-demo) "Set up ini pose for objs")
   (prac2cram:prac2cram-server *pracsimserver-plan-matchings* #'cancel-function)
+  (roslisp:ros-info (pizza-demo) "Started a prac2cram server")
   ;;(perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil)
-  (let* ((a 1) (b 1) (s 1))
+  ;;(cpl-impl:top-level 
+  ;;  (perform-cut-pm "bread" "knife" (get-cut-skeleton-wrapper "bread" 3) 3 nil))
+  (let* ((a 1) (b 1) (s 1)
+         (thr (sb-thread:make-thread (lambda ()
+                                       (cpl-impl:top-level
+                                         (perform-cut-pm "bread" "knife" (get-cut-skeleton-wrapper "bread" 3) 3 nil)))))
+         )
     (loop
       (let ((c (rem (+ a b) 97)))
         (roslisp:wait-duration 1)
+        (mapcar #'publish-marker-object *marker-object-fluents*)
         (format t "Tick-tock ~a: ~a.~%" s c)
         (setf s (+ s 1))
         (setf s (if (<= 100 s) 0 s))

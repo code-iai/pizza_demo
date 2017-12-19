@@ -21,7 +21,9 @@ class StateListener():
     
   def check_time(self):
     now = rospy.Time.now()
-    if now-self.sleep_time > self.lasttime:
+    if self.sleep_time.to_sec() > now.to_sec():
+      return False
+    if (now-self.sleep_time > self.lasttime):
       self.lasttime = now
       return True
     return False
