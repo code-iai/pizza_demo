@@ -29,20 +29,6 @@
 
 (in-package :pizza-ninja)
 
-(defparameter *tf-listener* nil)
-
-(defun ensure-tf-listener ()
-  (if *tf-listener*
-    *tf-listener*
-    (progn
-      (setf *tf-listener* (make-instance 'cl-tf:transform-listener))
-      (roslisp:wait-duration 1.0)
-      *tf-listener*)))
-(defun destroy-tf-listener ()
-  (setf *tf-listener* nil))
-
-(roslisp-utilities:register-ros-cleanup-function destroy-tf-listener)
-
 (defclass skeleton-segment ()
   ((segment-start :initform nil :initarg :segment-start :reader segment-start)
    (segment-end :initform nil :initarg :segment-end :reader segment-end)
@@ -228,70 +214,6 @@
 
 (defun pop-skeleton-segment (cut-skeleton-wrapper)
   (setf (cut-skeleton cut-skeleton-wrapper) (cdr (cut-skeleton cut-skeleton-wrapper))))
-
-(defun post-end-segment (cut-skeleton-wrapper arm-action)
-  (apply arm-action (list (segment-postend (get-current-segment cut-skeleton-wrapper))))
-  (cl-giskard:wait-for-action-result 10)
-  (pop-skeleton-segment cut-skeleton-wrapper)
-  T)
-
-(defun do-segment (cut-skeleton-wrapper convergence-test arm-action get-arm-transform)
-  (apply arm-action (list (segment-end (get-current-segment cut-skeleton-wrapper))))
-  (cl-giskard:wait-for-action-result 10)
-  (if (apply convergence-test nil)
-    (post-end-segment cut-skeleton-wrapper arm-action)
-    (trim-current-skeleton-segment cut-skeleton-wrapper (apply get-arm-transform nil))))
-
-(defun start-segment (cut-skeleton-wrapper convergence-test arm-action get-arm-transform)
-  (apply arm-action (list (segment-start (get-current-segment cut-skeleton-wrapper))))
-  (cl-giskard:wait-for-action-result 10)
-  (if (apply convergence-test nil)
-    (do-segment cut-skeleton-wrapper convergence-test arm-action get-arm-transform)
-    nil))
-
-(defun prep-segment (cut-skeleton-wrapper convergence-test arm-action get-arm-transform)
-  (apply arm-action (list (segment-prestart (get-current-segment cut-skeleton-wrapper))))
-  (cl-giskard:wait-for-action-result 10)
-  (if (apply convergence-test nil)
-    (start-segment cut-skeleton-wrapper convergence-test arm-action get-arm-transform)
-    nil))
-
-(defun left-converged ()
-  ;;(cl-giskard:left-arm-converged)
-  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "left_wrist_roll_link")))
-         (dummy (roslisp:wait-duration 1))
-         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "left_wrist_roll_link"))))
-    (declare (ignore dummy))
-    (< (cl-transforms-stamped:v-dist p1 p2) 0.004)))
-
-(defun right-converged ()
-  ;;(cl-giskard:right-arm-converged)
-  (let* ((p1 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "right_wrist_roll_link")))
-         (dummy (roslisp:wait-duration 1))
-         (p2 (cl-transforms-stamped:translation (cl-tf:lookup-transform (ensure-tf-listener) "map" "right_wrist_roll_link"))))
-    (declare (ignore dummy))
-    (< (cl-transforms-stamped:v-dist p1 p2) 0.004)))
-
-(defun left-arm-action (ps)
-  (format t "LEFT arm action for pose ~a~%" ps)
-  (cl-giskard:send-left-arm-action ps))
-
-(defun right-arm-action (ps)
-  (format t "RIGHT arm action for pose ~a~%" ps)
-  (cl-giskard:send-right-arm-action ps))
-
-;;(defun follow-current-segment (cut-skeleton-wrapper &optional (tool-arm "right"))
-;;  (let* ((tool-arm (string-downcase tool-arm))
-;;         (get-arm-transform (if (equal tool-arm "left")
-;;                              #'cl-giskard:get-left-arm-transform
-;;                              #'cl-giskard:get-right-arm-transform))
-;;         (convergence-test (if (equal tool-arm "left")
-;;                             #'left-converged
-;;                             #'right-converged))
-;;         (arm-action (if (equal tool-arm "left")
-;;                       #'left-arm-action
-;;                       #'right-arm-action)))
-;;    (prep-segment cut-skeleton-wrapper convergence-test arm-action get-arm-transform)))
 
 (defun suggest-placement-orientation (cut-skeleton-wrapper maneuver-arm arm-base-transform)
   (let* ((maneuver-arm (if (or (equal maneuver-arm :left) (equal maneuver-arm :right))

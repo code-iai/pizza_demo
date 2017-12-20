@@ -29,14 +29,7 @@
 
 (in-package :pizza-ninja)
 
-(defparameter *tf-listener* nil)
-
 (defparameter *pub-mrk* nil)
-
-(defparameter *base-link* "map")
-
-(defparameter *identity-pose* nil)
-(defparameter *identity-pose-msg* nil)
 
 (defparameter *segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.4 :b 0.9))
 (defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.9 :b 0.9))
