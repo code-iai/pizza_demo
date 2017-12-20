@@ -41,7 +41,28 @@
    (plan-to-environment-transform :initform nil :initarg :plan-to-environment-transform :accessor plan-to-environment-transform)))
 
 (defparameter *prep-offset* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.1)
-                                                          (cl-transforms:make-quaternion 0 0 0 1)))
+                                                          (cl-transforms:euler->quaternion)))
+
+
+(defun tr->ps (transform)
+  (let* ((v (cl-transforms:translation transform))
+         (r (cl-transforms:rotation transform))
+         (x (cl-transforms:x v))
+         (y (cl-transforms:y v))
+         (z (cl-transforms:z v))
+         (qx (cl-transforms:x r))
+         (qy (cl-transforms:y r))
+         (qz (cl-transforms:z r))
+         (qw (cl-transforms:w r)))
+    (roslisp:make-message "geometry_msgs/Pose"
+      :position (roslisp:make-message "geometry_msgs/Point" :x x :y y :z z)
+      :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x qx :y qy :z qz :w qw))))
+
+(defun vec->pnt (vec)
+  (roslisp:make-message "geometry_msgs/Point"
+                        :x (cl-transforms:x vec)
+                        :y (cl-transforms:y vec)
+                        :z (cl-transforms:z vec))
 
 (defun select-every (list idx mod)
   (let* ((k 0))
@@ -136,42 +157,17 @@
             (atan y x)
             0))))))
 
+(defun transform-segment-point (pl-to-en sk-to-tl point &key (prep-offset (cl-transform:make-identity-transform)))
+  (cl-transforms:transform* pl-to-en point prep-offset sk-to-tl))
+
 (defun transform-skeleton-segment (skeleton-segment sk-to-tl pl-to-en prep-offset)
-  (let* ((segment-t-start (segment-start skeleton-segment))
-         (segment-t-end (segment-end skeleton-segment))
-         (map-to-env-start (cl-transforms:transform* pl-to-en segment-t-start sk-to-tl (cl-transforms:transform-inv segment-t-start)))
-         (map-to-env-end (cl-transforms:transform* pl-to-en segment-t-end sk-to-tl (cl-transforms:transform-inv segment-t-end)))
-         (map-to-env-start-prep (cl-transforms:transform* pl-to-en segment-t-start prep-offset sk-to-tl (cl-transforms:transform-inv segment-t-start)))
-         (map-to-env-end-prep (cl-transforms:transform* pl-to-en segment-t-end prep-offset sk-to-tl (cl-transforms:transform-inv segment-t-end)))
-         (segment-start (cl-transforms:transform* map-to-env-start (segment-start skeleton-segment)))
-         (segment-end (cl-transforms:transform* map-to-env-end (segment-end skeleton-segment)))
-         (segment-prestart (cl-transforms:transform* map-to-env-start-prep (segment-start skeleton-segment)))
-         (segment-postend (cl-transforms:transform* map-to-env-end-prep (segment-end skeleton-segment))))
+  (let* ((segment-start (segment-start skeleton-segment))
+         (segment-end (segment-end skeleton-segment)))
     (make-instance 'skeleton-segment
-                   :segment-start segment-start
-                   :segment-end segment-end
-                   :segment-prestart segment-prestart
-                   :segment-postend segment-postend)))
-
-(defun trim-skeleton-segment (skeleton-segment last-reached-robot-pose sk-to-tl pl-to-en prep-offset)
-  (let* ((map-to-env (cl-transforms:transform* pl-to-en sk-to-tl))
-         (segment-start (cl-transforms:transform* (cl-transforms:transform-inv map-to-env) last-reached-robot-pose))
-         (segment-end (segment-end skeleton-segment))
-         (segment-prestart (cl-transforms:transform* prep-offset segment-start))
-         (segment-postend (segment-postend skeleton-segment)))
-    (make-instance 'skeleton-segment
-                   :segment-start segment-start
-                   :segment-end segment-end
-                   :segment-prestart segment-prestart
-                   :segment-postend segment-postend)))
-
-(defun trim-current-skeleton-segment (cut-skeleton-wrapper last-reached-robot-pose &optional (prep-offset *prep-offset*))
-  (setf (car (cut-skeleton cut-skeleton-wrapper)) 
-        (trim-skeleton-segment (car (cut-skeleton cut-skeleton-wrapper)) 
-                               last-reached-robot-pose
-                               (skeleton-to-tool-transform cut-skeleton-wrapper)
-                               (plan-to-environment-transform cut-skeleton-wrapper)
-                               prep-offset)))
+                   :segment-start (transform-segment-point pl-to-en sk-to-tl segment-start)
+                   :segment-end (transform-segment-point pl-to-en sk-to-tl segment-end)
+                   :segment-prestart (transform-segment-point pl-to-en sk-to-tl segment-start :prep-offset prep-offset)
+                   :segment-postend (transform-segment-point pl-to-en sk-to-tl segment-end :prep-offset prep-offset))))
 
 (defun create-cut-skeleton-wrapper (maneuver-parameters skeleton-to-tool-transform plan-to-environment-transform)
   (make-instance 'cut-skeleton-wrapper
@@ -185,14 +181,6 @@
                               (plan-to-environment-transform cut-skeleton-wrapper)
                               prep-offset))
 
-(defun get-segments-in-world (cut-skeleton-wrapper &optional (prep-offset *prep-offset*))
-  (mapcar (lambda (segment)
-            (transform-skeleton-segment segment
-                                        (skeleton-to-tool-transform cut-skeleton-wrapper) 
-                                        (plan-to-environment-transform cut-skeleton-wrapper)
-                                        prep-offset))
-          (cut-skeleton cut-skeleton-wrapper)))
-
 (defun get-segments-for-visualization (cut-skeleton-wrapper plan-to-environment-transform)
   (mapcar (lambda (segment)
             (let* ((segment (transform-skeleton-segment segment
@@ -201,14 +189,8 @@
                                                         *prep-offset*))
                    (segment-start (cl-transforms:translation (segment-start segment)))
                    (segment-end (cl-transforms:translation (segment-end segment)))
-                   (segment-start (roslisp:make-message "geometry_msgs/Point"
-                                                        :x (cl-transforms:x segment-start)
-                                                        :y (cl-transforms:y segment-start)
-                                                        :z (cl-transforms:z segment-start)))
-                   (segment-end (roslisp:make-message "geometry_msgs/Point"
-                                                        :x (cl-transforms:x segment-end)
-                                                        :y (cl-transforms:y segment-end)
-                                                        :z (cl-transforms:z segment-end))))
+                   (segment-start (vec->pnt segment-start))
+                   (segment-end (vec->pnt segment-end)))
               (list segment-start segment-end)))
           (cut-skeleton cut-skeleton-wrapper)))
 
@@ -244,19 +226,6 @@
     (declare (ignore max-angle) (ignore min-angle))
     (cl-transforms-stamped:transform* p-e-tran ortran (cl-transforms-stamped:transform-inv p-e-tran))))
 
-(defun argmax (score-fn obj-list)
-  (when (and (car obj-list) score-fn)
-    (let* ((argmax (car obj-list))
-           (max (funcall score-fn (car obj-list))))
-      (loop for obj in (cdr obj-list) do
-        (when obj
-          (let* ((cval (funcall score-fn obj)))
-            (if (< max cval)
-              (progn
-                (setf max cval)
-                (setf argmax obj))))))
-      argmax)))
-
 (defun segment-reachable (orientation-transform segment reachability-map)
   (if reachability-map
     (let* ((segment-start (cl-transforms-stamped:transform* orientation-transform (segment-start segment)))
@@ -269,32 +238,6 @@
            (segment-postend (pr2-reachability-costmap:pose-reachable-p reachability-map (cl-transforms-stamped:transform->pose segment-postend) :use-closest-orientation T)))
       (and segment-start segment-end segment-prestart segment-postend))
     T))
-
-(defun get-reachmap-scored-points (reachability-map arm-base-transform threshold)
-  (let* ((map-x-origin (cl-transforms-stamped:x (pr2-reachability-costmap::origin reachability-map)))
-         (map-y-origin (cl-transforms-stamped:y (pr2-reachability-costmap::origin reachability-map)))
-         (map-z-origin (cl-transforms-stamped:z (pr2-reachability-costmap::origin reachability-map)))
-         (map-x-resolution (cl-transforms-stamped:x (pr2-reachability-costmap::resolution reachability-map)))
-         (map-y-resolution (cl-transforms-stamped:y (pr2-reachability-costmap::resolution reachability-map)))
-         (map-z-resolution (cl-transforms-stamped:z (pr2-reachability-costmap::resolution reachability-map)))
-         (matrix (pr2-reachability-costmap::reachability-map reachability-map))
-         (x-max (1- (array-dimension matrix 2)))
-         (y-max (1- (array-dimension matrix 1)))
-         (z-max (1- (array-dimension matrix 0)))
-         (scored-points nil))
-    (loop for i from 0 upto z-max do
-      (loop for k from 0 upto y-max do
-        (loop for j from 0 upto x-max do
-          (let* ((candidate (cl-transforms-stamped:make-transform (cl-transforms-stamped:make-3d-vector
-                                                                    (pr2-reachability-costmap::array-index->map-coordinate j map-x-resolution map-x-origin)
-                                                                    (pr2-reachability-costmap::array-index->map-coordinate k map-y-resolution map-y-origin)
-                                                                    (pr2-reachability-costmap::array-index->map-coordinate i map-z-resolution map-z-origin))
-                                                                  (cl-transforms-stamped:make-identity-rotation)))
-                 (score (pr2-reachability-costmap:pose-reachability reachability-map (cl-transforms-stamped:transform->pose candidate)))
-                 (candidate (cl-transforms-stamped:transform* arm-base-transform candidate)))
-              (if (< threshold score)
-                (setf scored-points (cons (list candidate score) scored-points)))))))
-    scored-points))
 
 (defun get-reachmap-slice (reachability-map z arm-base-transform threshold)
   (let* ((z (- z (cl-transforms-stamped:z (cl-transforms:translation arm-base-transform))))

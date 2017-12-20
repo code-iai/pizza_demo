@@ -53,20 +53,6 @@
 
 (roslisp-utilities:register-ros-cleanup-function destroy-mrk-publisher)
 
-(defun tr->ps (transform)
-  (let* ((v (cl-transforms:translation transform))
-         (r (cl-transforms:rotation transform))
-         (x (cl-transforms:x v))
-         (y (cl-transforms:y v))
-         (z (cl-transforms:z v))
-         (qx (cl-transforms:x r))
-         (qy (cl-transforms:y r))
-         (qz (cl-transforms:z r))
-         (qw (cl-transforms:w r)))
-    (roslisp:make-message "geometry_msgs/Pose"
-      :position (roslisp:make-message "geometry_msgs/Point" :x x :y y :z z)
-      :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x qx :y qy :z qz :w qw))))
-
 (defun get-heatmap-color (value)
   (let* ((blue 0)
          (red (if (< value 0.5) value 0.5))
