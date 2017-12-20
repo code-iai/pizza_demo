@@ -1087,7 +1087,7 @@
   (mapcar (lambda (name)
             (detach-model "pr2" (own-eef-link-name :left) name name)
             (detach-model "pr2" (own-eef-link-name :right) name name)
-            (set-marker-object-pose (get-assoc-val name *object-initial-poses*)))
+            (set-marker-object-pose name (get-assoc-val name *object-initial-poses*)))
           (list "pizza_plate" "pizza_cutter" "bread" "knife")))
 
 (cpl-impl:def-cram-function perform-cut-pm (object-name tool-name cut-skeleton-wrapper amount slices-marker)
