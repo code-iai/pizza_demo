@@ -30,53 +30,42 @@
 
 (in-package :pizza-ninja)
 
-(defparameter *left-arm-up*
-              (tf:make-pose-stamped
-                "torso_lift_link" 0.0
-                (tf:make-3d-vector 0.1 0.45 0.3)
-                (tf:euler->quaternion :ay (/ pi -2))))
-
-(defparameter *right-arm-up*
-              (tf:make-pose-stamped
-                "torso_lift_link" 0.0
-                (tf:make-3d-vector 0.1 -0.45 0.3)
-                (tf:euler->quaternion :ay (/ pi -2))))
-
-(defparameter *pose-cutter-grab*
-              (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.6 0.25 0.03)
-                                                       (cl-transforms:euler->quaternion :ay (/ pi 2))))
-
-(defparameter *pose-cutter-pregrab*
-              (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.6 0.25 0.15)
-                                                       (cl-transforms:euler->quaternion :ay (/ pi 2))))
-
 (defparameter *pose-left-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.55 0.2 0.20)
+                                                       (cl-transforms:make-3d-vector 0.55 0 0.20)
                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 
 (defparameter *pose-right-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.55 -0.2 0.10)
+                                                       (cl-transforms:make-3d-vector 0.55 0 0.10)
                                                        (cl-transforms:euler->quaternion :az (/ pi 2))))
 
-(defparameter *above-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.22)
+
+(defparameter *grab-point-knife-left-arm* (cl-transforms:make-3d-vector -0.1 0 0))
+(defparameter *grab-point-knife-right-arm* (cl-transforms:make-3d-vector -0.05 0 0))
+(defparameter *grab-point-cutter-left-arm* (cl-transforms:make-3d-vector 0 0 0.2))
+(defparameter *grab-point-cutter-right-arm* (cl-transforms:make-3d-vector 0 0 0.1))
+
+(defparameter *tool-grab-points* `((("knife" :left) . ,*grab-point-knife-left-arm*)
+                                   (("knife" :right) . ,*grab-point-knife-right-arm*)
+                                   (("pizza_cutter" :left) . ,*grab-point-cutter-left-arm*)
+                                   (("pizza_cutter" :right) . ,*grab-point-cutter-right-arm*)))
+
+(defparameter *above-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0)
                                                                       (cl-transforms:euler->quaternion :ay (/ pi 2))))
-(defparameter *above-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0.22)
+(defparameter *above-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0 0)
                                                                        (cl-transforms:euler->quaternion :ay (/ pi 2))))
 ;;;;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-(defparameter *side-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 -0.2 0.0)
+(defparameter *side-grab-transform-left* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.0 0.0)
                                                                       (cl-transforms:euler->quaternion :az (/ pi 2))))
-(defparameter *side-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.2 0.0)
+(defparameter *side-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.0 0.0)
                                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 (defparameter *left-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.35 0.35 0.15)
-                                                                       (cl-transforms:make-quaternion 0 0 0 1)))
+                                                                       (cl-transforms:make-3d-vector 0.55 0.35 0.15)
+                                                                       (cl-transforms:euler->quaternion)))
 (defparameter *right-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.35 -0.35 0.15)
-                                                                       (cl-transforms:make-quaternion 0 0 0 1)))
+                                                                       (cl-transforms:make-3d-vector 0.55 -0.35 0.15)
+                                                                       (cl-transforms:euler->quaternion)))
 (defparameter *plate-radius* 0.2)
 (defparameter *bread-length* 0.3)
 (defparameter *bread-width* 0.07)
@@ -86,7 +75,7 @@
                                                                   (cl-transforms:make-identity-transform)))
 
 
-(defparameter *fixed-frame* "base_link")
+(defparameter *fixed-frame* "map")
 
 (defparameter *initial-pose-pizza* (cl-tf:make-pose-stamped
                                      *fixed-frame* 0
@@ -105,6 +94,10 @@
                                             (cl-tf:make-3d-vector -0.95 1.6 0.9)
                                             (cl-tf:euler->quaternion :ax pi :ay (- (/ pi 2)))))
 
+(defparameter *object-initial-poses* `(("bread" . ,*initial-pose-bread*)
+                                       ("knife" . ,*initial-pose-knife*)
+                                       ("pizza_plate" . ,*initial-pose-pizza*)
+                                       ("pizza_cutter" . ,*initial-pose-pizza-cutter*)))
 
 (defparameter *bread-pose* (cpl-impl:make-fluent
                              :name :bread-pose
@@ -389,15 +382,7 @@
                                              translation rotation)))
 
 (defun get-tool-grab-point (tool-name arm)
-  (cond
-    ((equal tool-name "pizza_cutter")
-      (if (equal arm :left)
-        (cl-transforms:make-3d-vector 0 0 0.1)
-        (cl-transforms:make-3d-vector 0 0 0)))
-    ((equal tool-name "knife")
-      (if (equal arm :left)
-        (cl-transforms:make-3d-vector 0.05 0 0)
-        (cl-transforms:make-3d-vector 0 0 0)))))
+  (get-assoc-val (list tool-name arm) *tool-grab-points*))
 
 ;;;;;;; !!!!!!!!!!!!!!!!!!!!!
 (defun get-arm-grab-locs-old (arm tool-name tool-loc arm-grab-type)
@@ -504,11 +489,8 @@
       "package://pizza_demo/models/bread/meshes/bread.stl")))
 
 (defun reset-skeleton-markers ()
-  (roslisp:publish (ensure-mrk-publisher) (roslisp:make-message "visualization_msgs/Marker"
-                                                                :header (roslisp:make-message "std_msgs/Header" :frame_id *fixed-frame* :stamp 0)
-                                                                :id 0
-                                                                :action 3
-                                                                :ns "cut-skeleton")))
+  (roslisp:publish (ensure-mrk-publisher)
+                   (make-mrk-msg *fixed-frame* :namespace "cut-skeleton" :action 3)))
 
 (defun update-markers (cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
   (declare (ignore tool-name) (ignore slices-marker))
@@ -523,17 +505,8 @@
                        object-name))
          (frame-locked (if location 0 1))
          (obj-pose-msg (if location
-                         (roslisp:make-message "geometry_msgs/Pose"
-                                               :position (roslisp:make-message "geometry_msgs/Point" :x (cl-transforms:x (cl-transforms:translation location))
-                                                                                                     :y (cl-transforms:y (cl-transforms:translation location))
-                                                                                                     :z (cl-transforms:z (cl-transforms:translation location)))
-                                               :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x (cl-transforms:x (cl-transforms:rotation location))
-                                                                                                             :y (cl-transforms:y (cl-transforms:rotation location))
-                                                                                                             :z (cl-transforms:z (cl-transforms:rotation location))
-                                                                                                             :w (cl-transforms:w (cl-transforms:rotation location))))
-                         (roslisp:make-message "geometry_msgs/Pose"
-                                               :position (roslisp:make-message "geometry_msgs/Point" :x 0 :y 0 :z 0)
-                                               :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x 0 :y 0 :z 0 :w 1))))
+                         (tr->ps location)
+                         (tr->ps (cl-tf:make-identity-transform))))
          (object-msg (make-mesh-marker-msg base-frame (get-mesh-resource object-name) :frame-locked frame-locked :color *object-color* :pose obj-pose-msg :alpha alpha :namespace mrk-namespace))
          (slice-rotation (when slices-marker
                            (second slices-marker)))
@@ -546,14 +519,7 @@
          (slice-location (when slices-marker
                            (cl-transforms:transform* slice-location slice-rotation)))
          (slice-pose-msg (when slices-marker
-                           (roslisp:make-message "geometry_msgs/Pose"
-                                                 :position (roslisp:make-message "geometry_msgs/Point" :x (cl-transforms:x (cl-transforms:translation slice-location))
-                                                                                                       :y (cl-transforms:x (cl-transforms:translation slice-location))
-                                                                                                       :z (cl-transforms:x (cl-transforms:translation slice-location)))
-                                                 :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x (cl-transforms:x (cl-transforms:rotation slice-location))
-                                                                                                               :y (cl-transforms:y (cl-transforms:rotation slice-location))
-                                                                                                               :z (cl-transforms:z (cl-transforms:rotation slice-location))
-                                                                                                               :w (cl-transforms:w (cl-transforms:rotation slice-location))))))
+                           (tr->ps slice-location)))
          (slice-msg (when slices-marker
                       (make-mesh-marker-msg base-frame (first slices-marker) :frame-locked frame-locked :color *slice-color* :id 1 :pose slice-pose-msg :alpha alpha :namespace mrk-namespace))))
     (roslisp:publish (ensure-mrk-publisher) object-msg)
@@ -585,13 +551,10 @@
   (attach-model *fixed-frame* *fixed-frame* object-model-name object-link-name))
 
 (defun on-grab-object (object-name arm)
-  ;(detach-model "IAI_kitchen" "room_link" object-name object-name)
   (attach-model "pr2" (own-eef-link-name arm) object-name object-name))
 
 (defun on-release-object (object-name arm)
-  (detach-model "pr2" (own-eef-link-name arm) object-name object-name)
-  ;(attach-model "IAI_kitchen" "room_link" object-name object-name)
-  )
+  (detach-model "pr2" (own-eef-link-name arm) object-name object-name))
 
 ;; Compute grasp/release poses for repositioning maneuvers
 
@@ -1118,25 +1081,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun cancel-function ()
-  (detach-model "pr2" (own-eef-link-name :left) "pizza_plate" "pizza_plate")
-  (detach-model "pr2" (own-eef-link-name :right)  "pizza_plate" "pizza_plate")
-  (detach-model "pr2" (own-eef-link-name :left) "pizza_cutter" "pizza_cutter")
-  (detach-model "pr2" (own-eef-link-name :right)  "pizza_cutter" "pizza_cutter")
-  (detach-model "pr2" (own-eef-link-name :left) "bread" "bread")
-  (detach-model "pr2" (own-eef-link-name :right) "bread" "bread")
-  (detach-model "pr2" (own-eef-link-name :left)  "knife" "knife")
-  (detach-model "pr2" (own-eef-link-name :right)  "knife" "knife")
-  (set-marker-object-pose "pizza_plate" *initial-pose-pizza*)
-  (set-marker-object-pose "pizza_cutter" *initial-pose-pizza-cutter*)
-  (set-marker-object-pose "bread" *initial-pose-bread*)
-  (set-marker-object-pose "knife" *initial-pose-knife*)
   (cram-process-modules:with-process-modules-running (pr2-pms::pr2-arms-pm)
     (move-arms-up)
-    (fake-move-robot *initial-pose-robot*)))
+    (fake-move-robot *initial-pose-robot*))
+  (mapcar (lambda (name)
+            (detach-model "pr2" (own-eef-link-name :left) name name)
+            (detach-model "pr2" (own-eef-link-name :right) name name)
+            (set-marker-object-pose (get-assoc-val name *object-initial-poses*)))
+          (list "pizza_plate" "pizza_cutter" "bread" "knife")))
 
 (cpl-impl:def-cram-function perform-cut-pm (object-name tool-name cut-skeleton-wrapper amount slices-marker)
   (cram-process-modules:with-process-modules-running (pr2-pms::pr2-arms-pm pr2-pms::pr2-grippers-pm pr2-pms::pr2-ptu-pm pr2-pms::pr2-base-pm)
-    ;;(maphash (lambda (k v) (format t "~a~%" k)) (cl-tf::transforms cram-tf:*transformer*))
     (perform-cut object-name tool-name cut-skeleton-wrapper amount slices-marker)))
 
 (defparameter *pracsimserver-plan-matchings*
@@ -1146,28 +1101,13 @@
 
 (defun start-scenario ()
   (roslisp:ros-info (pizza-demo) "Starting up ...")
-  ;;(remhash 'cram-tf::init-tf roslisp-utilities::*ros-init-functions*)
   (remhash 'cram-moveit::init-moveit-bridge roslisp-utilities::*ros-init-functions*)
   (remhash 'semantic-map-collision-environment::init-semantic-map-collision-environment roslisp-utilities::*ros-init-functions*)
-  ;;(remhash 'cram-location-costmap::location-costmap-vis-init roslisp-utilities::*ros-init-functions*)
-  (maphash (lambda (k v) (format t "~a ~a~%" k v))
-           roslisp-utilities::*ros-init-functions*)
   (roslisp-utilities:startup-ros)
   (setf cram-tf:*transformer* (make-instance 'cl-tf2:buffer-client))
-  ;;(format t "~a~%" (cl-tf::transforms cram-tf:*transformer*))
-  ;;(cpl-impl:sleep* 5)
-  ;;(format t "~a~%" (cl-tf::transforms cram-tf:*transformer*))
-  ;;(maphash (lambda (k v) (format t "~a~%" k)) (cl-tf::transforms cram-tf:*transformer*))
-  ;;(roslisp:start-ros-node "cram")
   (roslisp:ros-info (pizza-demo) "Node startup complete")
-  ;;(semantic-map-collision-environment:publish-semantic-map-collision-objects)
-  (roslisp:ros-info (pizza-demo) "Semantic map collision environment published")
-  (roslisp:ros-info (pizza-demo) "Set up ini pose for objs")
   (prac2cram:prac2cram-server *pracsimserver-plan-matchings* #'cancel-function)
   (roslisp:ros-info (pizza-demo) "Started a prac2cram server")
-  ;;(perform-cut "pizza_plate" "pizza_cutter" pizza-ninja::*cut-skeleton-wrapper* nil)
-  ;;(cpl-impl:top-level 
-  ;;  (perform-cut-pm "bread" "knife" (get-cut-skeleton-wrapper "bread" 3) 3 nil))
   (let* ((a 1) (b 1) (s 1)
          (thr (sb-thread:make-thread (lambda ()
                                        (cpl-impl:top-level
