@@ -62,7 +62,7 @@
   (roslisp:make-message "geometry_msgs/Point"
                         :x (cl-transforms:x vec)
                         :y (cl-transforms:y vec)
-                        :z (cl-transforms:z vec))
+                        :z (cl-transforms:z vec)))
 
 (defun select-every (list idx mod)
   (let* ((k 0))
@@ -154,7 +154,7 @@
                (y (- ye ys))
                (n (+ (* x x) (* y y))))
           (if (> n 0.000001)
-            (atan y x)
+            (atan y x)sss
             0))))))
 
 (defun transform-segment-point (pl-to-en sk-to-tl point &key (prep-offset (cl-transforms:make-identity-transform)))
