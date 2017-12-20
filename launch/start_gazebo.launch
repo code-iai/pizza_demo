@@ -1,17 +1,34 @@
 <launch>
 
-  <!-- Load reasoning. TODO: get rid of the dep on ltfnp_reasoning. -->
+  <!-- Load reasoning. -->
   <param name="initial_package" type="string" value="pizza_demo" />
   <node name="json_prolog" pkg="json_prolog" type="json_prolog_node" output="screen"/>
   
 
   <!--<include file="$(find iai_kitchen)/launch/upload_kitchen.launch"/>-->
-  <include file="$(find iai_pr2_sim)/launch/pr2.launch" />
+  <include file="$(find iai_pr2_description)/launch/upload_pr2.launch" />
+
+  <node pkg="iai_naive_kinematics_sim" type="simulator" 
+        name="pr2" output="screen">
+    <rosparam command="load"
+        file="$(find pizza_demo)/config/sim_config.yaml" />
+    <remap from="~joint_states" to="/joint_states" />
+  </node>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher"
+        name="robot_state_publisher" />
+
+  <node pkg="tf2_ros" type="buffer_server" name="tf2_buffer_server" />
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="fake_localization"
+        output="screen" args="0 0 0 0 0 0 map odom" />
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="fake_odometry"
+        output="screen" args="0 0 0 0 0 0 odom base_footprint" />
+
   <include file="$(find giskard_pr2)/launch/whole_body_controller.launch">
     <arg name="sim" value="true" />
   </include>
-
-  <!--<node name="tf2_buffer_server" pkg="tf2_ros" type="buffer_server"/>-->
 
   <!-- Web-related nodes for visualization in browser -->
   <node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher" args="" respawn="true" output="screen" />
@@ -19,9 +36,6 @@
     <arg name="port" value="$(optenv ROSBRIDGE_WEBPORT)" />
   </include>
   
-  <!--TODO: get rid of these deps -->
-  <!-- <include file="$(find pr2_moveit_node)/launch/move_group.launch"/> -->
-  <include file="$(find pr2_moveit_node)/launch/nav_pcontroller.launch"/>
 
   <!-- Spawn pizza plate, pizza cutter -->
   <param name="pizza_description" textfile="$(find pizza_demo)/models/pizza_plate/pizza_plate.urdf" />
