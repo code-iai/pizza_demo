@@ -27,5 +27,5 @@
             :components
             ((:file "package")
              (:file "pizza-ninja" :depends-on ("package"))
-             (:file "markers" :depends-on ("package"))
-             (:file "demo" :depends-on ("package" "pizza-ninja" "markers"))))))
+             (:file "markers" :depends-on ("package" "pizza-ninja"))
+             (:file "demo" :depends-on ("package" "markers"))))))

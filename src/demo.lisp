@@ -127,8 +127,6 @@
                                         ("pizza_plate" . ,*pizza-plate*)
                                         ("pizza_cutter" . ,*pizza-cutter*)))
 
-;;(defparameter *marker-object-colors* `(("bread" . ,(roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r r :g g :b b))))
-
 (defparameter *marker-object-mesh-paths* `(("bread" . "package://pizza_demo/models/bread/meshes/bread.dae")
                                            ("knife" . "package://pizza_demo/models/knife/meshes/knife.dae")
                                            ("pizza_cutter" . "package://pizza_demo/models/pizza_cutter/meshes/pizza_cutter.dae")
@@ -136,9 +134,6 @@
 
 (defun get-assoc-val (key alist)
   (cdr (assoc key alist :test #'equal)))
-
-;;(defun get-mrk-object-color (obj-name)
-;;  (get-assoc-val obj-name *marker-object-colors*))
 
 (defun get-mrk-object-mesh-path (obj-name)
   (get-assoc-val obj-name *marker-object-mesh-paths*))
@@ -178,7 +173,6 @@
          (pose-msg (roslisp:make-message "geometry_msgs/Pose"
                      :position (roslisp:make-message "geometry_msgs/Point" :x x :y y :z z)
                      :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x qx :y qy :z qz :w qw)))
-         ;;(color-msg (get-mrk-object-color obj-name))
          (mesh-path (get-mrk-object-mesh-path obj-name))
          (mrk-msg (roslisp:make-message "visualization_msgs/Marker"
                                         :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
@@ -254,36 +248,8 @@
     (pr2-pp-plans::move-arms-in-sequence poses nil)
     (pr2-pp-plans::move-arms-in-sequence nil poses)))
 
-;;(defun move-arm-poses (arm poses)
-;;  (cpl-impl:with-failure-handling
-;;    ((cram-common-failures:manipulation-pose-unreachable (f)
-;;       (declare (ignore f))
-;;       ;; So far, when encountered this meant the simulation was not recoverable
-;;       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
-;;       (setf (cpl:value prac2cram:plan-error) T)
-;;       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
-;;       (cpl-impl:retry)))
-;;    (mot-man:execute-arm-action (mot-man:make-goal-specification
-;;                                  :moveit-goal-specification
-;;                                  :arm-pose-goals (list (list arm (mot-man:eef-link-name arm) poses))))))
-
 (defun move-arms-up ()
   (pr2-pp-plans::park-arms))
-
-;;(defun move-arms-up ()
-;;  (cpl-impl:with-failure-handling
-;;    ((cram-common-failures:manipulation-pose-unreachable (f)
-;;       (declare (ignore f))
-;;       ;; So far, when encountered this meant the simulation was not recoverable
-;;       ;; This will (assuming we're running from a sim_inst_mngr.py script) cause the entire simulation to eventually reset
-;;       (setf (cpl:value prac2cram:plan-error) T)
-;;       ;; Put a retry here, but we're really just waiting for SIGTERM from sim_inst_mngr.py
-;;       (cpl-impl:retry)))
-;;    (mot-man:execute-arm-action (cram-moveit-manager:make-goal-specification
-;;                                  :moveit-goal-specification
-;;                                  :keys '((:raise-elbow (:left :right)))
-;;                                  :arm-pose-goals (list `(:left ,*left-arm-up*)
-;;                                                        `(:right ,*right-arm-up*))))))
 
 ;; Load capmap
 
@@ -568,7 +534,7 @@
                          (roslisp:make-message "geometry_msgs/Pose"
                                                :position (roslisp:make-message "geometry_msgs/Point" :x 0 :y 0 :z 0)
                                                :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x 0 :y 0 :z 0 :w 1))))
-         (object-msg (make-mrk-msg base-frame frame-locked 0 0 obj-pose-msg *object-color* (get-mesh-resource object-name) :alpha alpha :namespace mrk-namespace))
+         (object-msg (make-mesh-marker-msg base-frame (get-mesh-resource object-name) :frame-locked frame-locked :color *object-color* :pose obj-pose-msg :alpha alpha :namespace mrk-namespace))
          (slice-rotation (when slices-marker
                            (second slices-marker)))
          (slice-rotation (when slices-marker
@@ -589,7 +555,7 @@
                                                                                                                :z (cl-transforms:z (cl-transforms:rotation slice-location))
                                                                                                                :w (cl-transforms:w (cl-transforms:rotation slice-location))))))
          (slice-msg (when slices-marker
-                      (make-mrk-msg base-frame frame-locked 1 0 slice-pose-msg *slice-color* (first slices-marker) :alpha alpha :namespace mrk-namespace))))
+                      (make-mesh-marker-msg base-frame (first slices-marker) :frame-locked frame-locked :color *slice-color* :id 1 :pose slice-pose-msg :alpha alpha :namespace mrk-namespace))))
     (roslisp:publish (ensure-mrk-publisher) object-msg)
     (when slice-msg
       (roslisp:publish (ensure-mrk-publisher) slice-msg))))
@@ -775,25 +741,12 @@
         ((sb-sys:deadline-timeout (f)
            (declare (ignore f))
            (cpl-impl:retry)))
-        ;;(format t "Wait4Torso~%")
-        ;;(actionlib:wait-for-server torso-action)
-        (format t "TorsoUp~%")
-        ;;(actionlib:send-goal-and-wait torso-action
-        ;;                              (actionlib:make-action-goal torso-action position 0.3)
-        ;;                              :result-timeout 30.0
-        ;;                              :exec-timeout 30.0)
         )
       (progn
         (format t "ArmsUp~%")
         (move-arms-up)
         (format t "Going~%")
         (fake-move-robot ?desired-base-pose)
-        ;;(exe:perform (desig:a motion
-        ;;                      (type going)
-        ;;                      (target (desig:a location (pose ?desired-base-pose)))))
-        ;;(actionlib-lisp:send-goal-and-wait pr2-nav-pm::*navp-client*
-        ;;                                   (pr2-nav-pm::make-action-goal desired-base-pose)
-        ;;                                   100 100)
         ))))
 
 ;; Bigger plans
