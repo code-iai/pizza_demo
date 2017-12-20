@@ -1164,26 +1164,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun get-init-pose (object-name tf-transformer)
-  (let* ((transform (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0)))
-    (roslisp:make-message "geometry_msgs/Pose"
-                          :position (roslisp:make-message "geometry_msgs/Point"
-                                                          :x (cl-tf:x (cl-tf:translation transform))
-                                                          :y (cl-tf:y (cl-tf:translation transform))
-                                                          :z (cl-tf:z (cl-tf:translation transform)))
-                          :orientation (roslisp:make-message "geometry_msgs/Quaternion"
-                                                             :x (cl-tf:x (cl-tf:rotation transform))
-                                                             :y (cl-tf:y (cl-tf:rotation transform))
-                                                             :z (cl-tf:z (cl-tf:rotation transform))
-                                                             :w (cl-tf:w (cl-tf:rotation transform))))))
-
-(defun set-gazebo-object-pose (model-name model-pose)
-  (roslisp:call-service "/gazebo/set_model_state" 'gazebo_msgs-srv:SetModelState
-                        :model_state (roslisp:make-message "gazebo_msgs/ModelState"
-                                                           :model_name model-name
-                                                           :pose model-pose
-                                                           :reference_frame *fixed-frame*)))
-
 (defun cancel-function ()
   (detach-model "pr2" (own-eef-link-name :left) "pizza_plate" "pizza_plate")
   (detach-model "pr2" (own-eef-link-name :right)  "pizza_plate" "pizza_plate")
