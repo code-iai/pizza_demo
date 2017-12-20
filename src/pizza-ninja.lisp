@@ -154,7 +154,7 @@
                (y (- ye ys))
                (n (+ (* x x) (* y y))))
           (if (> n 0.000001)
-            (atan y x)sss
+            (atan y x)
             0))))))
 
 (defun transform-segment-point (pl-to-en sk-to-tl point &key (prep-offset (cl-transforms:make-identity-transform)))
