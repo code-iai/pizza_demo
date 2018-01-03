@@ -61,10 +61,10 @@
 (defparameter *side-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.0 0.0)
                                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 (defparameter *left-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.55 0.35 0.15)
+                                                                       (cl-transforms:make-3d-vector 0.75 0.35 0.15)
                                                                        (cl-transforms:euler->quaternion)))
 (defparameter *right-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.55 -0.35 0.15)
+                                                                       (cl-transforms:make-3d-vector 0.75 -0.35 0.15)
                                                                        (cl-transforms:euler->quaternion)))
 (defparameter *plate-radius* 0.2)
 (defparameter *bread-length* 0.3)
@@ -723,6 +723,7 @@
          (first-arm-eef-link (own-eef-link-name first-arm))
          (second-arm-eef-link (own-eef-link-name second-arm)))
     (format t "  HANDOVER-TOOL ~a ~a ~a ~a ~a ~a~%" tool-name object-name first-arm second-arm first-arm-has-tool put-down)
+    (format t "   ~a~%" first-arm-grab)
 ;; Grab the tool with the first arm, unless it's already grabbed
     (unless first-arm-has-tool
       (move-arm-poses first-arm (list first-arm-pregrab first-arm-grab))
