@@ -61,10 +61,10 @@
 (defparameter *side-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.0 0.0)
                                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 (defparameter *left-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.85 0.35 0.14)
+                                                                       (cl-transforms:make-3d-vector 0.85 0.35 0.151)
                                                                        (cl-transforms:euler->quaternion)))
 (defparameter *right-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.75 -0.35 0.14)
+                                                                       (cl-transforms:make-3d-vector 0.75 -0.35 0.151)
                                                                        (cl-transforms:euler->quaternion)))
 (defparameter *plate-radius* 0.2)
 (defparameter *bread-length* 0.3)
@@ -732,6 +732,7 @@
       (attach-model robot-name first-arm-eef-link tool-name tool-name)
       (move-arm-poses first-arm first-arm-pregrab)
       (format t "    Finished grabbing tool with first arm~%")
+      (format t "    PARK ~a~%" (get-park-pose first-arm))
       )
 ;; Depending on whether we need to change which arm has the tool, go to a handover or park pose
     (if (equal first-arm second-arm)
