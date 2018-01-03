@@ -755,7 +755,9 @@
         (attach-model robot-name second-arm-eef-link tool-name tool-name)
         ;(detach-model robot-name first-arm-eef-link tool-name tool-name)
 ;; Park the first arm, in case of the handover
-        (move-arm-poses first-arm (list (get-park-pose first-arm)))))
+        ;;(move-arm-poses first-arm (list (get-park-pose first-arm)))
+        (move-arms-up)
+        ))
 ;; Depending on whether we need to do a put-down, either do the put-down, or just park the arm
     (if put-down
       (let* ((object-loc (get-transform-to-marker-object tf-transformer "torso_lift_link" object-name :timeout 5.0))
@@ -819,6 +821,7 @@
                init-sup-man-count))
       (setf (plan-to-environment-transform cut-skeleton-wrapper)
             (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0))
+      (update-markers cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
       (move-arm-poses aux-arm (get-park-pose aux-arm)))
 ;; Follow the skeleton segment: first, prepare the poses to send for the arm
     (let* ((segment (get-current-segment cut-skeleton-wrapper))
