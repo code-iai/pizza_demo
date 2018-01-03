@@ -61,11 +61,11 @@
 (defparameter *side-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.0 0.0)
                                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 (defparameter *left-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.85 0.35 0.151)
-                                                                       (cl-transforms:euler->quaternion)))
+                                                                       (cl-transforms:make-3d-vector 0.339 0.538 0.135)
+                                                                       (cl-transforms:euler->quaternion :az -0.3)))
 (defparameter *right-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.75 -0.35 0.151)
-                                                                       (cl-transforms:euler->quaternion)))
+                                                                       (cl-transforms:make-3d-vector 0.339 -0.538 0.135)
+                                                                       (cl-transforms:euler->quaternion :az 0.3)))
 (defparameter *plate-radius* 0.2)
 (defparameter *bread-length* 0.3)
 (defparameter *bread-width* 0.07)
