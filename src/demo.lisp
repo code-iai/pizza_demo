@@ -735,6 +735,8 @@
       (format t "    PARK ~a~%" (get-park-pose first-arm))
       )
 ;; Depending on whether we need to change which arm has the tool, go to a handover or park pose
+    (format t "Forcing a wait ...~%")
+    (cpl-impl:sleep* 10)
     (if (equal first-arm second-arm)
       (move-arm-poses first-arm (list (get-park-pose first-arm)))
       (move-arm-poses first-arm (list (get-handover-src-pose first-arm))))
