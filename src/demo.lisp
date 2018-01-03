@@ -889,7 +889,8 @@
 ;;         (owl-name (format nil "~a.owl" file-name)))
     ;;(cram-beliefstate:extract-dot-file dot-name)
     ;;(cram-beliefstate:extract-owl-file owl-name)
-    ))
+    ;;)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
