@@ -463,6 +463,7 @@
                        (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (pregrab (cl-transforms:transform* tool-loc pregrab))
          (grab (cl-transforms:transform* tool-loc grab))
+         (dummy (format t "    GRAB-TRF ~a ~a ~a~%" tool-name arm grab))
          (pregrab (cl-transforms-stamped:make-pose-stamped (cl-transforms-stamped:frame-id tool-loc) 0
                                                            (cl-transforms-stamped:translation pregrab)
                                                            (cl-transforms-stamped:rotation pregrab)))
