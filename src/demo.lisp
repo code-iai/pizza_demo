@@ -723,7 +723,8 @@
          (first-arm-eef-link (own-eef-link-name first-arm))
          (second-arm-eef-link (own-eef-link-name second-arm)))
     (format t "  HANDOVER-TOOL ~a ~a ~a ~a ~a ~a~%" tool-name object-name first-arm second-arm first-arm-has-tool put-down)
-    (format t "   ~a~%" first-arm-grab)
+    (format t "  TOOL-LOC ~a~%" tool-loc)
+    (format t "  GRAB-LOC ~a~%" first-arm-grab)
 ;; Grab the tool with the first arm, unless it's already grabbed
     (unless first-arm-has-tool
       (move-arm-poses first-arm (list first-arm-pregrab first-arm-grab))
