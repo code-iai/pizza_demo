@@ -61,10 +61,10 @@
 (defparameter *side-grab-transform-right* (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.0 0.0 0.0)
                                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 (defparameter *left-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.75 0.35 0.15)
+                                                                       (cl-transforms:make-3d-vector 0.85 0.35 0.14)
                                                                        (cl-transforms:euler->quaternion)))
 (defparameter *right-eef-park* (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0
-                                                                       (cl-transforms:make-3d-vector 0.75 -0.35 0.15)
+                                                                       (cl-transforms:make-3d-vector 0.75 -0.35 0.14)
                                                                        (cl-transforms:euler->quaternion)))
 (defparameter *plate-radius* 0.2)
 (defparameter *bread-length* 0.3)
@@ -439,7 +439,7 @@
                             ((equal arm-grab-type :use)
                               (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.275 0 0) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
-                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
+                          (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (grab (cond
                  ((equal arm :left)
                    (cond
@@ -460,10 +460,9 @@
                          ((equal arm-grab-type :use)
                            (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.2 0 0) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
-                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
+                       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (pregrab (cl-transforms:transform* tool-loc pregrab))
          (grab (cl-transforms:transform* tool-loc grab))
-         (dummy (format t "    GRAB-TRF ~a ~a ~a~%" tool-name arm grab))
          (pregrab (cl-transforms-stamped:make-pose-stamped (cl-transforms-stamped:frame-id tool-loc) 0
                                                            (cl-transforms-stamped:translation pregrab)
                                                            (cl-transforms-stamped:rotation pregrab)))
