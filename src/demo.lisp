@@ -1128,7 +1128,7 @@
   (let* ((a 1) (b 1) (s 1)
          (thr (sb-thread:make-thread (lambda ()
                                        (cpl-impl:top-level
-                                         (perform-cut-pm "pizza_plate" "pizza_cutter" (get-cut-skeleton-wrapper "pizza" 4) 4 nil)))))
+                                         (perform-cut-pm "pizza_plate" "pizza_cutter" (get-cut-skeleton-wrapper "pizza_plate" 4) 4 nil)))))
          )
     (loop
       (let ((c (rem (+ a b) 97)))
