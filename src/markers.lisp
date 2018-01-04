@@ -35,7 +35,7 @@
 (defparameter *RVIZ-DEL-ALL-MARKER* 3)
 
 (defparameter *segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.4 :b 0.9))
-(defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.9 :b 0.9))
+(defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.9 :g 0.2 :b 0.9))
 (defparameter *object-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.7 :b 0.3))
 (defparameter *slice-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.3 :g 0.8 :b 0.3))
 
