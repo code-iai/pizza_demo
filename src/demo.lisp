@@ -312,7 +312,7 @@
 (defun get-skeleton-to-tool (tool-name)
   (cond
     ((equal tool-name "pizza_cutter")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.1) (cl-transforms:make-quaternion 0 0 0 1)))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.05) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
 
