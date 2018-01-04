@@ -836,6 +836,7 @@
            (seg-postend (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend)))
            (seg-waypoints (get-seg-waypoints seg-start seg-end 0.03)))
 ;; Follow the current skeleton segment; do it a few times, for style
+      (format t "    PIZZA ~a" (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0))
       (format t "    STARTCUT ~a~%" seg-start)
       (move-arm-poses maneuver-arm 
                       (append (list seg-prestart seg-start)

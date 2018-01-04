@@ -32,6 +32,7 @@
 (defparameter *pub-mrk* nil)
 (defparameter *RVIZ-ADD-MARKER* 0)
 (defparameter *RVIZ-DEL-MARKER* 2)
+(defparameter *RVIZ-DEL-ALL-MARKER* 3)
 
 (defparameter *segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.4 :b 0.9))
 (defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.9 :b 0.9))
@@ -112,7 +113,7 @@
                                 next-segments ids)))
     (mapcar (lambda (id) 
               (roslisp:publish (ensure-mrk-publisher)
-                               (make-mrk-msg base-frame :namespace "cut-skeleton" :action *RVIZ-DEL-MARKER* :id id)))
+                               (make-mrk-msg base-frame :namespace "cut-skeleton" :action *RVIZ-DEL-MARKER* :id id :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.001 :y 0.001 :z 0.001))))
             (alexandria:iota 10))
     (when first-seg-msg
       (roslisp:publish (ensure-mrk-publisher) first-seg-msg))
