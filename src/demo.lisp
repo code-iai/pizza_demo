@@ -499,8 +499,10 @@
       "package://pizza_demo/models/bread/meshes/bread.stl")))
 
 (defun reset-skeleton-markers ()
-  (roslisp:publish (ensure-mrk-publisher)
-                   (make-mrk-msg *fixed-frame* :namespace "cut-skeleton" :action 3)))
+  (mapcar (lambda (id) 
+            (roslisp:publish (ensure-mrk-publisher)
+                             (make-mrk-msg base-frame :namespace "cut-skeleton" :action *RVIZ-DEL-MARKER* :id id :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.001 :y 0.001 :z 0.001))))
+          (alexandria:iota 10)))
 
 (defun update-markers (cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
   (declare (ignore tool-name) (ignore slices-marker))
@@ -1145,7 +1147,7 @@
   (let* ((a 1) (b 1) (s 1)
          (thr (sb-thread:make-thread (lambda ()
                                        (cpl-impl:top-level
-                                         (perform-cut-pm "pizza_plate" "pizza_cutter" (get-cut-skeleton-wrapper "pizza_plate" 4) 4 nil)))))
+                                         (perform-cut-pm "bread" "knife" (get-cut-skeleton-wrapper "bread" 3) 3 nil)))))
          )
     (loop
       (let ((c (rem (+ a b) 97)))

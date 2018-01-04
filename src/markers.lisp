@@ -78,12 +78,12 @@
                             :pose pose
                             :scale scale
                             :color color
-                            :color colors
+                            :colors colors
                             :points points
                             :mesh_resource mesh-resource))))
 
 (defun make-mesh-marker-msg (base-frame-name mesh-resource &key
-                             (color *object-color*) (frame-locked 0) (id 0) (action 0) (pose (tr->ps (cl-transforms:make-identity-transform))) (alpha 1) (namespace "cutplan"))
+                             (color *object-color*) (frame-locked 0) (id 0) (action *RVIZ-ADD-MARKER*) (pose (tr->ps (cl-transforms:make-identity-transform))) (alpha 1) (namespace "cutplan"))
   (make-mrk-msg base-frame-name :frame-locked frame-locked :color color :id id :action action :pose pose :type 10 :alpha alpha :namespace namespace :mesh-resource mesh-resource))
 
 (defun place-skeleton-markers (cut-skeleton-wrapper base-frame &key (linked-frame nil) (base-to-link-transform nil))
