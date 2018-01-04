@@ -312,7 +312,7 @@
 (defun get-skeleton-to-tool (tool-name)
   (cond
     ((equal tool-name "pizza_cutter")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.05) (cl-transforms:make-quaternion 0 0 0 1)))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.07) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
       (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
 
@@ -834,10 +834,13 @@
            (seg-end (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 (cl-transforms:translation seg-end) (cl-transforms:rotation seg-end)))
            (seg-postend (segment-postend segment))
            (seg-postend (cl-transforms-stamped:make-pose-stamped *fixed-frame* 0 (cl-transforms:translation seg-postend) (cl-transforms:rotation seg-postend)))
-           (seg-waypoints (get-seg-waypoints seg-start seg-end 0.03)))
+           (seg-waypoints (get-seg-waypoints seg-start seg-end 0.01)))
 ;; Follow the current skeleton segment; do it a few times, for style
       (format t "    PIZZA ~a" (get-transform-to-marker-object tf-transformer *fixed-frame* object-name :timeout 5.0))
+      (format t "    PRESTART ~a~%" seg-prestart)
       (format t "    STARTCUT ~a~%" seg-start)
+      (format t "    SEGFIRST ~a~%" (first seg-waypoints))
+      (format t "    SEGSECND ~a~%" (second seg-waypoints))
       (move-arm-poses maneuver-arm 
                       (append (list seg-prestart seg-start)
                               seg-waypoints
