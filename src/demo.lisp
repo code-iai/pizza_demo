@@ -544,7 +544,8 @@
             robot-link-name
             0
             (cl-tf:translation new-transform)
-            (cl-tf:rotation new-transform)))))
+            (cl-tf:rotation new-transform))))
+  (cpl-impl:sleep* 1))
 
 (defun detach-model (robot-model-name robot-link-name object-model-name object-link-name)
   (declare (ignore robot-model-name) (ignore robot-link-name))
@@ -975,7 +976,7 @@
 
 (defun get-pizza-cut-skeleton-wrapper (amount)
   (let* ((transformer cram-tf::*transformer*)
-         (pizza-loc (get-transform-to-marker-object transformer *fixed-frame* "pizza_plate" :timeout 5.0))
+         (pizza-loc (get-transform-to-marker-object transformer *fixed-frame* "pizza_plate" :timeout 15.0))
          (robot-at-pizza-loc (get-desired-base-pose "pizza_plate" transformer))
          (amount (sanity-check amount "pizza_plate"))
          (need-cuts (< 1 amount))
@@ -1122,6 +1123,7 @@
   (remhash 'semantic-map-collision-environment::init-semantic-map-collision-environment roslisp-utilities::*ros-init-functions*)
   (roslisp-utilities:startup-ros)
   (setf cram-tf:*transformer* (make-instance 'cl-tf2:buffer-client))
+  (cpl-impl:sleep* 1)
   (roslisp:ros-info (pizza-demo) "Node startup complete")
   (prac2cram:prac2cram-server *pracsimserver-plan-matchings* #'cancel-function)
   (roslisp:ros-info (pizza-demo) "Started a prac2cram server")
