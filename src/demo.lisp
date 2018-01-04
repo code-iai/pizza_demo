@@ -1145,9 +1145,9 @@
   (prac2cram:prac2cram-server *pracsimserver-plan-matchings* #'cancel-function)
   (roslisp:ros-info (pizza-demo) "Started a prac2cram server")
   (let* ((a 1) (b 1) (s 1)
-         (thr (sb-thread:make-thread (lambda ()
-                                       (cpl-impl:top-level
-                                         (perform-cut-pm "bread" "knife" (get-cut-skeleton-wrapper "bread" 3) 3 nil)))))
+         ;;(thr (sb-thread:make-thread (lambda ()
+         ;;                              (cpl-impl:top-level
+         ;;                                (perform-cut-pm "bread" "knife" (get-cut-skeleton-wrapper "bread" 3) 3 nil)))))
          )
     (loop
       (let ((c (rem (+ a b) 97)))
