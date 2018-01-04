@@ -236,10 +236,20 @@
 
 ;; Basic move functions
 
+(defun move-arm-pose (arm pose)
+  (cpl-impl:with-failure-handling
+    ((cram-common-failures:actionlib-action-timed-out (e)
+       (declare (ignore e))
+       (return)))
+    (if (eql arm :left)
+      (pr2-pp-plans::move-arms-in-sequence (list pose) nil)
+      (pr2-pp-plans::move-arms-in-sequence nil (list pose)))))
+
 (defun move-arm-poses (arm poses)
-  (if (eql arm :left)
-    (pr2-pp-plans::move-arms-in-sequence poses nil)
-    (pr2-pp-plans::move-arms-in-sequence nil poses)))
+  (let* ((poses (if (listp poses) poses (list poses))))
+    (mapcar (lambda (pose)
+              (move-arm-pose arm pose))
+            poses)))
 
 (defun move-arms-up ()
   (pr2-pp-plans::park-arms))
