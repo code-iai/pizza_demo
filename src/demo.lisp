@@ -501,7 +501,7 @@
 (defun reset-skeleton-markers ()
   (mapcar (lambda (id) 
             (roslisp:publish (ensure-mrk-publisher)
-                             (make-mrk-msg base-frame :namespace "cut-skeleton" :action *RVIZ-DEL-MARKER* :id id :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.001 :y 0.001 :z 0.001))))
+                             (make-mrk-msg "map" :namespace "cut-skeleton" :action *RVIZ-DEL-MARKER* :id id :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.001 :y 0.001 :z 0.001))))
           (alexandria:iota 10)))
 
 (defun update-markers (cut-skeleton-wrapper object-name tool-name slices-marker tf-transformer)
