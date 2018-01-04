@@ -32,12 +32,12 @@
 
 (defparameter *pose-left-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.55 0 0.20)
+                                                       (cl-transforms:make-3d-vector 0.55 0 0.1)
                                                        (cl-transforms:euler->quaternion :az (/ pi -2))))
 
 (defparameter *pose-right-handover*
               (cl-transforms-stamped:make-pose-stamped "torso_lift_link" 0.0
-                                                       (cl-transforms:make-3d-vector 0.55 0 0.10)
+                                                       (cl-transforms:make-3d-vector 0.55 0 0.05)
                                                        (cl-transforms:euler->quaternion :az (/ pi 2))))
 
 
@@ -312,9 +312,9 @@
 (defun get-skeleton-to-tool (tool-name)
   (cond
     ((equal tool-name "pizza_cutter")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.195 0 0) (cl-transforms:make-quaternion 0 0 0 1)))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0) (cl-transforms:make-quaternion 0 0 0 1)))
     ((equal tool-name "knife")
-      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
+      (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
 
 ;;    Tool frame placement in arm
 
@@ -425,9 +425,9 @@
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.1 0 0.1) (cl-transforms:euler->quaternion :az pi)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.1 0 0.15) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.1 0 0.1) (cl-transforms:euler->quaternion)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.1 0 0.15) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                     ((equal arm :right)
@@ -435,9 +435,9 @@
                         ((equal tool-name "pizza_cutter")
                           (cond
                             ((equal arm-grab-type :pickup)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.1 0 0.16) (cl-transforms:euler->quaternion :az pi)))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector 0.1 0 0.2) (cl-transforms:euler->quaternion :az pi)))
                             ((equal arm-grab-type :use)
-                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.1 0 0.16) (cl-transforms:euler->quaternion)))))
+                              (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.1 0 0.2) (cl-transforms:euler->quaternion)))))
                         ((equal tool-name "knife")
                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (grab (cond
@@ -446,9 +446,9 @@
                      ((equal tool-name "pizza_cutter")
                        (cond
                          ((equal arm-grab-type :pickup)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.1) (cl-transforms:euler->quaternion :az pi)))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.15) (cl-transforms:euler->quaternion :az pi)))
                          ((equal arm-grab-type :use)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0 0 0.1) (cl-transforms:euler->quaternion)))))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0 0 0.15) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
                        (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.22 0 0.1) (cl-transforms:euler->quaternion :ay (/ pi 2))))))
                  ((equal arm :right)
@@ -456,9 +456,9 @@
                      ((equal tool-name "pizza_cutter")
                        (cond
                          ((equal arm-grab-type :pickup)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.16) (cl-transforms:euler->quaternion :az pi)))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 0.2) (cl-transforms:euler->quaternion :az pi)))
                          ((equal arm-grab-type :use)
-                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0 0 0.16) (cl-transforms:euler->quaternion)))))
+                           (cl-transforms:make-transform (cl-transforms:make-3d-vector -0 0 0.2) (cl-transforms:euler->quaternion)))))
                      ((equal tool-name "knife")
                        (cl-transforms:make-transform (cl-transforms:make-3d-vector -0.12 0 0) (cl-transforms:euler->quaternion :ay (/ pi 2))))))))
          (pregrab (cl-transforms:transform* tool-loc pregrab))
@@ -1013,8 +1013,8 @@
   (let* ((amount (sanity-check amount "bread"))
          (slice-thickness 0.015)
          (indices (alexandria:iota amount))
-         (start-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) (- 0 (* *bread-width* 0.5)) 0.03))
-         (end-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) (* *bread-width* 0.5) 0.03))
+         (start-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) (- 0 (* *bread-width* 0.5)) 0))
+         (end-base (cl-transforms:make-3d-vector (* *bread-length* 0.5) (* *bread-width* 0.5) 0))
          (disp (cl-transforms:make-3d-vector (- 0 slice-thickness) 0 0))
          (segments (mapcar (lambda (k)
                              (let* ((k (+ k 1))
