@@ -222,7 +222,8 @@
                             (cl-tf:rotation shifted)))))))
             *marker-object-fluents*)
     (setf (cpl-impl:value *robot-base-fluent*)
-                          transform)))
+                          transform))
+  (mapcar #'publish-marker-object *marker-object-fluents*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -557,6 +558,7 @@
             0
             (cl-tf:translation new-transform)
             (cl-tf:rotation new-transform))))
+  (mapcar #'publish-marker-object *marker-object-fluents*)
   (cpl-impl:sleep* 1))
 
 (defun detach-model (robot-model-name robot-link-name object-model-name object-link-name)
@@ -874,6 +876,7 @@
   ;;                               :experiment "Cut with assistive maneuvers"
   ;;                               :description (format nil "Perform ~a cuts (so as to get ~a slices) on the ~a with the ~a." (length (cut-skeleton cut-skeleton-wrapper)) amount object-name tool-name))
   ;;(cram-beliefstate::set-experiment-meta-data "performedInMap" "http://knowrob.org/kb/IAI-kitchen.owl#IAIKitchenMap_PM580j" :type :resource :ignore-namespace t)
+  (mapcar #'publish-marker-object *marker-object-fluents*)
   (format t "PERFORM-CUT ~a ~a~%" object-name tool-name)
   (let* ((log-node-id 0;;(cram-beliefstate:start-node "SLICING" nil)
          )
@@ -1123,7 +1126,8 @@
             (detach-model "pr2" (own-eef-link-name :left) name name)
             (detach-model "pr2" (own-eef-link-name :right) name name)
             (set-marker-object-pose name (get-assoc-val name *object-initial-poses*)))
-          (list "pizza_plate" "pizza_cutter" "bread" "knife")))
+          (list "pizza_plate" "pizza_cutter" "bread" "knife"))
+  (mapcar #'publish-marker-object *marker-object-fluents*))
 
 (cpl-impl:def-cram-function perform-cut-pm (object-name tool-name cut-skeleton-wrapper amount slices-marker)
   (cram-process-modules:with-process-modules-running (pr2-pms::pr2-arms-pm pr2-pms::pr2-grippers-pm pr2-pms::pr2-ptu-pm pr2-pms::pr2-base-pm)
@@ -1152,7 +1156,7 @@
     (loop
       (let ((c (rem (+ a b) 97)))
         (roslisp:wait-duration 1)
-        (mapcar #'publish-marker-object *marker-object-fluents*)
+        ;;(mapcar #'publish-marker-object *marker-object-fluents*)
         (format t "Tick-tock ~a: ~a.~%" s c)
         (setf s (+ s 1))
         (setf s (if (<= 100 s) 0 s))
