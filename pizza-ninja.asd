@@ -6,51 +6,26 @@
   :maintainer "Mihai Pomarlan <blandc@cs.uni-bremen.com>"
   :licence "BSD"
   :description "Uses giskard to perform cutting actions."
-  :depends-on (:cl-transforms-stamped
-               :alexandria
-               :cl-tf
-               :meshproc_msgs-srv
-               :attache_msgs-srv
-               :gazebo_msgs-srv
+  :depends-on (:alexandria
                :visualization_msgs-msg
-               ;;:cutplan-srv
-               ;;:cutplan
-               :cl-giskard
                :ros-load-manifest
                :roslisp-utilities
                :roslisp
-               :ros-load-manifest
-               :cram-moveit-manager
                :prac2cram
-               ;;:pr2-manipulation-process-module
-               ;;
-               cram-tf
-               cram-process-modules
-               actionlib
-               roslisp-utilities
-               cram-prolog
-               cram-plan-failures
-               cram-plan-occasions-events
-               cram-occasions-events
-               cram-pr2-description
-               pr2_controllers_msgs-msg
-               pr2_msgs-msg
-               pr2_msgs-srv
-               trivial-garbage
-               std_srvs-srv
-               alexandria
-               semantic-map-collision-environment
-               pr2_mechanism_msgs-srv
-               cram-motion-manager
-               cram-moveit
-               cram-beliefstate
-               ;;
-               :pr2-navigation-process-module
+               :cram-tf
+               :actionlib
+               :cram-prolog
+               :cram-pr2-description
+               :trivial-garbage
+               :semantic-map-collision-environment
+               :cram-executive
+               :cram-pr2-pick-place-plans
+               :cram-pr2-process-modules
                :pr2-reachability-costmap)
   :components
   ((:module "src"
             :components
             ((:file "package")
              (:file "pizza-ninja" :depends-on ("package"))
-             (:file "markers" :depends-on ("package"))
-             (:file "demo" :depends-on ("package" "pizza-ninja" "markers"))))))
+             (:file "markers" :depends-on ("package" "pizza-ninja"))
+             (:file "demo" :depends-on ("package" "markers"))))))

@@ -29,27 +29,15 @@
 
 (in-package :pizza-ninja)
 
-(defparameter *tf-listener* nil)
-
 (defparameter *pub-mrk* nil)
-
-(defparameter *base-link* "map")
-
-(defparameter *identity-pose* nil)
-(defparameter *identity-pose-msg* nil)
+(defparameter *RVIZ-ADD-MARKER* 0)
+(defparameter *RVIZ-DEL-MARKER* 2)
+(defparameter *RVIZ-DEL-ALL-MARKER* 3)
 
 (defparameter *segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.4 :b 0.9))
-(defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.2 :g 0.9 :b 0.9))
-
-(defparameter *plate-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.8 :b 0.8))
-
-(defparameter *pizza-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.7 :b 0.3))
-
+(defparameter *first-segment-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.9 :g 0.2 :b 0.9))
 (defparameter *object-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.7 :b 0.3))
-
 (defparameter *slice-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.3 :g 0.8 :b 0.3))
-
-(defparameter *cut-color* (roslisp:make-message "std_msgs/ColorRGBA" :a 1 :r 0.8 :g 0.3 :b 0.3))
 
 (defparameter *visualization-topic* "/visualization_marker")
 
@@ -66,52 +54,37 @@
 
 (roslisp-utilities:register-ros-cleanup-function destroy-mrk-publisher)
 
+(defun get-heatmap-color (value)
+  (let* ((blue 0)
+         (red (if (< value 0.5) value 0.5))
+         (red (* red 2))
+         (aux (- value 0.5))
+         (green (if (< value 0.5) 0 (* aux aux 4)))
+         (green (* green 2)))
+    (roslisp:make-message "std_msgs/ColorRGBA" :a 0.25 :r red :g green :b blue)))
 
-(defun tr->ps (transform)
-  (let* ((v (cl-transforms:translation transform))
-         (r (cl-transforms:rotation transform))
-         (x (cl-transforms:x v))
-         (y (cl-transforms:y v))
-         (z (cl-transforms:z v))
-         (qx (cl-transforms:x r))
-         (qy (cl-transforms:y r))
-         (qz (cl-transforms:z r))
-         (qw (cl-transforms:w r)))
-    (roslisp:make-message "geometry_msgs/Pose"
-      :position (roslisp:make-message "geometry_msgs/Point" :x x :y y :z z)
-      :orientation (roslisp:make-message "geometry_msgs/Quaternion" :x qx :y qy :z qz :w qw))))
-
-(defun make-mrk-msg (base-frame-name frame-locked id action pose color mesh-resource &key (alpha 1) (namespace "cutplan"))
+(defun make-mrk-msg (base-frame-name &key
+                     (pose (tr->ps (cl-transforms:make-identity-transform))) (action *RVIZ-ADD-MARKER*) (id 0) (type 0) (color *object-color*) (frame-locked 0) (colors (coerce nil 'vector))
+                     (mesh-resource "") (alpha 1) (namespace "cutplan") (scale (roslisp:make-message "geometry_msgs/Vector3" :x 1 :y 1 :z 1)) (points (coerce nil 'vector)))
   (roslisp:with-fields (a r g b) color
     (let* ((color (roslisp:make-message "std_msgs/ColorRGBA" :a (* a alpha) :r r :g g :b b)))
       (roslisp:make-message "visualization_msgs/Marker"
-                            :header (roslisp:make-message "std_msgs/Header" 
-                                                          :frame_id base-frame-name :stamp 0)
-                                                          :ns namespace
-                                                          :id id
-                                                          :frame_locked frame-locked
-                                                          :type 10
-                                                          :action action
-                                                          :pose pose
-                                                          :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                                       :x 1 :y 1 :z 1)
-                                                          :color color
-                                                          :mesh_resource mesh-resource))))
+                            :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame-name :stamp 0)
+                            :ns namespace
+                            :id id
+                            :frame_locked frame-locked
+                            :action action
+                            :type type
+                            :pose pose
+                            :scale scale
+                            :color color
+                            :colors colors
+                            :points points
+                            :mesh_resource mesh-resource))))
 
-(defun place-plate-group-markers (where from-pizza-to-plate id-plate id-pizza id-slice base-frame &key (alpha 1) (linked-frame nil) (base-to-link-transform nil))
-  (declare (ignore id-plate))
-  (let* ((linked-frame (if base-to-link-transform linked-frame nil))
-         (where (if linked-frame 
-                  (cl-transforms-stamped:transform* (cl-transforms-stamped:transform-inv base-to-link-transform) where)
-                  where))
-         (pizza-pose-msg (tr->ps where))
-         (slice-pose-msg (tr->ps (cl-transforms-stamped:transform* where (cl-transforms:transform-inv from-pizza-to-plate))))
-         (base-frame (if linked-frame linked-frame base-frame))
-         (frame-locked (if linked-frame 1 0))
-         (pizza-msg (make-mrk-msg base-frame frame-locked id-pizza 0 pizza-pose-msg *pizza-color* "package://pizza_demo/models/pizza_plate/meshes/pizza_plate_visual.stl" :alpha alpha))
-         (slice-msg (make-mrk-msg base-frame frame-locked id-slice 0 slice-pose-msg *slice-color* "package://pizza_demo/models/pizza_plate/meshes/slice.stl" :alpha alpha)))
-    (roslisp:publish (ensure-mrk-publisher) pizza-msg)
-    (roslisp:publish (ensure-mrk-publisher) slice-msg)))
+(defun make-mesh-marker-msg (base-frame-name mesh-resource &key
+                             (color *object-color*) (frame-locked 0) (id 0) (action *RVIZ-ADD-MARKER*) (pose (tr->ps (cl-transforms:make-identity-transform))) (alpha 1) (namespace "cutplan"))
+  (make-mrk-msg base-frame-name :frame-locked frame-locked :color color :id id :action action :pose pose :type 10 :alpha alpha :namespace namespace :mesh-resource mesh-resource))
 
 (defun place-skeleton-markers (cut-skeleton-wrapper base-frame &key (linked-frame nil) (base-to-link-transform nil))
   (let* ((where (plan-to-environment-transform cut-skeleton-wrapper))
@@ -121,73 +94,32 @@
                   where))
          (base-frame (if linked-frame linked-frame base-frame))
          (frame-locked (if linked-frame 1 0))
+         (arrow-scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.01 :y 0.015 :z 0.015))
          (segments (get-segments-for-visualization cut-skeleton-wrapper where))
-         ;;(points (apply #'append segments))
          (first-segment (when (car segments)
                           (car segments)))
-         ;;(points (cdr (cdr points)))
          (next-segments (cdr segments))
          (first-seg-msg (when first-segment
-                          (roslisp:make-message "visualization_msgs/Marker"
-                                                :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
-                                                :ns "cut-skeleton"
-                                                :id 0
-                                                :frame_locked frame-locked
-                                                :action 0
-                                                :type 0
-                                                :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                             :x 0.01 :y 0.015 :z 0.015)
-                                                :points (coerce first-segment 'vector)
-                                                :pose (tr->ps (cl-transforms:make-identity-transform))
-                                                :color *first-segment-color*)))
-         ;;(second-seg-msg (roslisp:make-message "visualization_msgs/Marker"
-         ;;                                      :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
-         ;;                                      :ns "cut-skeleton"
-         ;;                                      :id 1
-         ;;                                      :frame_locked frame-locked
-         ;;                                      :action 0
-         ;;                                      :type 5
-         ;;                                      :points (coerce points 'vector)
-         ;;                                      :scale (roslisp:make-message "geometry_msgs/Vector3"
-         ;;                                                                   :x 0.01 :y 0.015 :z 0.015)
-         ;;                                      :pose (tr->ps (cl-transforms:make-identity-transform))
-         ;;                                      :color *segment-color*))
+                          (make-mrk-msg base-frame
+                                        :frame-locked frame-locked :color *first-segment-color* :namespace "cut-skeleton" 
+                                        :scale arrow-scale
+                                        :points (coerce first-segment 'vector))))
          (ids (alexandria:iota (length next-segments) :start 1))
          (next-seg-list (mapcar (lambda (segment id)
-                                  (roslisp:make-message "visualization_msgs/Marker"
-                                                        :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
-                                                        :ns "cut-skeleton"
-                                                        :id id
-                                                        :frame_locked frame-locked
-                                                        :action 0
-                                                        :type 0
-                                                        :points (coerce segment 'vector)
-                                                        :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                                     :x 0.01 :y 0.015 :z 0.015)
-                                                        :pose (tr->ps (cl-transforms:make-identity-transform))
-                                                        :color *segment-color*))
+                                  (make-mrk-msg base-frame
+                                                :frame-locked frame-locked :color *segment-color* :namespace "cut-skeleton" :id id
+                                                :scale arrow-scale
+                                                :points (coerce segment 'vector)))
                                 next-segments ids)))
     (mapcar (lambda (id) 
-              (roslisp:publish (ensure-mrk-publisher) 
-                               (roslisp:make-message "visualization_msgs/Marker"
-                                                     :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
-                                                     :pose (tr->ps (cl-transforms:make-transform (cl-transforms:make-3d-vector 0 0 12) (cl-transforms:euler->quaternion)))
-                                                     :ns "cut-skeleton" :action 2 :id id)))
+              (roslisp:publish (ensure-mrk-publisher)
+                               (make-mrk-msg base-frame :namespace "cut-skeleton" :action *RVIZ-DEL-MARKER* :id id :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.001 :y 0.001 :z 0.001))))
             (alexandria:iota 10))
     (when first-seg-msg
       (roslisp:publish (ensure-mrk-publisher) first-seg-msg))
     (mapcar (lambda (msg)
               (roslisp:publish (ensure-mrk-publisher) msg))
             next-seg-list)))
-
-(defun get-heatmap-color (value)
-  (let* ((blue 0)
-         (red (if (< value 0.5) value 0.5))
-         (red (* red 2))
-         (aux (- value 0.5))
-         (green (if (< value 0.5) 0 (* aux aux 4)))
-         (green (* green 2)))
-    (roslisp:make-message "std_msgs/ColorRGBA" :a 0.25 :r red :g green :b blue)))
 
 (defun place-reachmap-markers (reachmap-slice arm-base-frame obj-position)
   (let* ((slice-points (mapcar (lambda (arg)
@@ -212,102 +144,21 @@
                                slice-points slice-rm-scores))
          (reachmap-msgs
            (mapcar (lambda (point score color id)
-                     (roslisp:make-message "visualization_msgs/Marker"
-                                           :header (roslisp:make-message "std_msgs/Header" :frame_id arm-base-frame :stamp 0)
-                                           :ns "reachmap-slice"
-                                           :id id
-                                           :frame_locked nil
-                                           :action 0
-                                           :type 3
-                                           :pose (tr->ps (cl-transforms:make-transform (cl-transforms:v+ point (cl-transforms:make-3d-vector 0 0 (/ score 2))) (cl-transforms:make-quaternion 0 0 0 1)))
-                                           :scale (roslisp:make-message "geometry_msgs/Vector3"
-                                                                        :x 0.01 :y 0.01 :z score)
-                                           :color color))
+                     (make-mrk-msg arm-base-frame :namespace "reachmap-slice" :id id :type 3 :color color
+                                   :pose (tr->ps (cl-transforms:make-transform (cl-transforms:v+ point (cl-transforms:make-3d-vector 0 0 (/ score 2))) (cl-transforms:euler->quaternion)))
+                                   :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.01 :y 0.01 :z score)))
                    slice-points slice-scores slice-colors slice-ids))
-         (reachmap-msg (roslisp:make-message "visualization_msgs/Marker"
-                                             :header (roslisp:make-message "std_msgs/Header" :frame_id arm-base-frame :stamp 0)
-                                             :ns "reachmap-slice"
-                                             :id 100
-                                             :frame_locked nil
-                                             :action 0
-                                             :type 8
-                                             :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.01 :y 0.01 :z 0.01)
-                                             :pose (tr->ps (cl-transforms:make-identity-transform))
-                                             :points (coerce (mapcar (lambda (point)
-                                                                       (roslisp:make-message "geometry_msgs/Point"
-                                                                                             :x (cl-transforms:x point)
-                                                                                             :y (cl-transforms:y point)
-                                                                                             :z (cl-transforms:z point)))
-                                                                     slice-points)
-                                                             'vector)
-                                             :colors (coerce slice-colors 'vector))))
+         (reachmap-msg (make-mrk-msg arm-base-frame :namespace "reachmap-slice-sphere" :id 100 :type 8 :colors (coerce slice-colors 'vector)
+                                     :pose (tr->ps (cl-transforms:make-identity-transform))
+                                     :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.01 :y 0.01 :z 0.01)
+                                     :points (coerce (mapcar (lambda (point)
+                                                               (roslisp:make-message "geometry_msgs/Point"
+                                                                                     :x (cl-transforms:x point)
+                                                                                     :y (cl-transforms:y point)
+                                                                                     :z (cl-transforms:z point)))
+                                                             slice-points)
+                                                     'vector))))
     (mapcar (lambda (reachmap-msg) 
               (roslisp:publish (ensure-mrk-publisher) reachmap-msg)) (subseq reachmap-msgs 0 100))
-    (roslisp:publish (ensure-mrk-publisher) reachmap-msg)
-    ))
-
-(defun place-reachmap-slice-markers (reachability-map z arm-base-transform threshold)
-  (let* ((reachmap-slice (get-reachmap-slice reachability-map z arm-base-transform threshold))
-         (scored-points (mapcar (lambda (arg)
-                                  (let* ((p (first arg)))
-                                    (list p (second arg))))
-                                reachmap-slice))
-         (slice-points (mapcar #'first scored-points))
-         (slice-points (mapcar #'cl-transforms:translation slice-points))
-         (slice-scores (mapcar #'second scored-points))
-         (slice-colors (mapcar (lambda (arg)
-                                 (get-heatmap-color arg))
-                               slice-scores))
-         (reachmap-msg (roslisp:make-message "visualization_msgs/Marker"
-                                             :header (roslisp:make-message "std_msgs/Header" :frame_id "map" :stamp 0)
-                                             :ns "reachmap-dump"
-                                             :id 0
-                                             :frame_locked nil
-                                             :action 0
-                                             :type 8
-                                             :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.01 :y 0.01 :z 0.01)
-                                             :pose (tr->ps (cl-transforms:make-identity-transform))
-                                             :points (coerce (mapcar (lambda (point)
-                                                                       (roslisp:make-message "geometry_msgs/Point"
-                                                                                             :x (cl-transforms:x point)
-                                                                                             :y (cl-transforms:y point)
-                                                                                             :z (cl-transforms:z point)))
-                                                                     slice-points)
-                                                             'vector)
-                                             :colors (coerce slice-colors 'vector))))
     (roslisp:publish (ensure-mrk-publisher) reachmap-msg)))
 
-(defun get-reachmap-markers (reachability-map arm-base-transform threshold &key (fixed-frame "map"))
-  (let* ((scored-points (get-reachmap-scored-points reachability-map arm-base-transform threshold))
-         (slice-points (mapcar #'first scored-points))
-         (slice-points (mapcar #'cl-transforms:translation slice-points))
-         (slice-scores (mapcar #'second scored-points))
-         (slice-colors (mapcar (lambda (arg)
-                                 (get-heatmap-color arg))
-                               slice-scores))
-         (reachmap-msg (roslisp:make-message "visualization_msgs/Marker"
-                                             :header (roslisp:make-message "std_msgs/Header" :frame_id fixed-frame :stamp 0)
-                                             :ns "reachmap-dump"
-                                             :id 0
-                                             :frame_locked nil
-                                             :action 0
-                                             :type 8
-                                             :scale (roslisp:make-message "geometry_msgs/Vector3" :x 0.01 :y 0.01 :z 0.01)
-                                             :pose (tr->ps (cl-transforms:make-identity-transform))
-                                             :points (coerce (mapcar (lambda (point)
-                                                                       (roslisp:make-message "geometry_msgs/Point"
-                                                                                             :x (cl-transforms:x point)
-                                                                                             :y (cl-transforms:y point)
-                                                                                             :z (cl-transforms:z point)))
-                                                                     slice-points)
-                                                             'vector)
-                                             :colors (coerce slice-colors 'vector))))
-    (roslisp:publish (ensure-mrk-publisher) reachmap-msg)))
-
-(defun clear-reachmap-markers (base-frame)
-  (let* ((reachmap-msg (roslisp:make-message "visualization_msgs/Marker"
-                                             :header (roslisp:make-message "std_msgs/Header" :frame_id base-frame :stamp 0)
-                                             :ns "reachmap-slice"
-                                             :id 0
-                                             :action 3)))
-    (roslisp:publish (ensure-mrk-publisher) reachmap-msg)))
