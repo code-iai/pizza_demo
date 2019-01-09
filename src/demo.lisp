@@ -808,12 +808,12 @@
 
 (defun cleanup-action-roles (action-roles)
   (let* ((action-roles (mapcar (lambda (action-role)
-                                 (roslisp:with-fields ((role-name role_name) (role-value role_value)) action-role
+                                 (roslisp:with-fields ((role-name role_name) (role-value role_value) (role-values role_values)) action-role
                                    (let* ((point-pos (position #\. role-value))
                                           (role-value (if point-pos
                                                           (subseq role-value 0 point-pos)
                                                           role-value)))
-                                     (list role-name role-value))))
+                                     (list role-name role-value (coerce role-values 'list)))))
                                action-roles)))
     action-roles))
 
